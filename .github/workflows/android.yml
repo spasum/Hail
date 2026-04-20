@@ -10,6 +10,7 @@ on:
       - 'fastlane/**'
       - '.github/**'
       - '!.github/workflows/android.yml'
+  workflow_dispatch:
 
 jobs:
   build:
