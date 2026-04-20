@@ -46,12 +46,17 @@ jobs:
           APK_PATH: app/build/outputs/apk/release/${{ env.filename }}
           FILENAME: ${{ env.filename }}
         run: |
-          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
-            echo "Telegram secrets are not configured, skipping APK delivery to Telegram."
-            exit 0
+          if [ -z "${TELEGRAM_BOT_TOKEN}" ]; then
+            echo "::error::TELEGRAM_BOT_TOKEN secret is not set"
+            exit 1
           fi
-          curl --fail --silent --show-error \
+          if [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "::error::TELEGRAM_CHAT_ID secret is not set"
+            exit 1
+          fi
+          echo "Sending ${FILENAME} to Telegram..."
+          curl --fail --show-error \
             -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
             -F chat_id="${TELEGRAM_CHAT_ID}" \
             -F document=@"${APK_PATH}" \
-            -F caption="✅ Build ${GITHUB_SHA::7} | File: ${FILENAME}"
+            -F caption="✅ Build ${GITHUB_SHA:0:7} | File: ${FILENAME}"
