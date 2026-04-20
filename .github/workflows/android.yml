@@ -14,7 +14,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ !startsWith(github.event.head_commit.message, '[skip ci]') }}
+    if: ${{ !startsWith(github.event.head_commit.message, '[skip ci]') && !github.event.repository.fork }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
