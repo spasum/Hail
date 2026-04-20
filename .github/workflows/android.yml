@@ -39,15 +39,19 @@ jobs:
           name: ${{ env.filename }}
           path: app/build/outputs/apk/release/${{ env.filename }}
       - name: Send APK to Telegram
-        if: ${{ success() && secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' }}
+        if: ${{ success() }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           APK_PATH: app/build/outputs/apk/release/${{ env.filename }}
           FILENAME: ${{ env.filename }}
         run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "Telegram secrets are not configured, skipping delivery."
+            exit 0
+          fi
           curl --fail --silent --show-error \
             -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
             -F chat_id="${TELEGRAM_CHAT_ID}" \
             -F document=@"${APK_PATH}" \
-            -F caption="✅ ${GITHUB_REPOSITORY} ${GITHUB_REF_NAME} ${GITHUB_SHA::7} ${FILENAME}"
+            -F caption="✅ Repo: ${GITHUB_REPOSITORY} | Branch: ${GITHUB_REF_NAME} | Commit: ${GITHUB_SHA::7} | File: ${FILENAME}"
