@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - main
     paths-ignore:
       - '**.md'
       - 'fastlane/**'
@@ -13,7 +14,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ !startsWith(github.event.head_commit.message, '[skip ci]') && github.repository_owner == 'aistra0528' }}
+    if: ${{ !startsWith(github.event.head_commit.message, '[skip ci]') && github.repository_owner == 'spasum' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,3 +38,19 @@ jobs:
         with:
           name: ${{ env.filename }}
           path: app/build/outputs/apk/release/${{ env.filename }}
+      - name: Send APK to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          APK_PATH: app/build/outputs/apk/release/${{ env.filename }}
+          FILENAME: ${{ env.filename }}
+        run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "Telegram secrets are not configured, skipping APK delivery to Telegram."
+            exit 0
+          fi
+          curl --fail --silent --show-error \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+            -F chat_id="${TELEGRAM_CHAT_ID}" \
+            -F document=@"${APK_PATH}" \
+            -F caption="✅ Build ${GITHUB_SHA::7} | File: ${FILENAME}"
