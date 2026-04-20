@@ -14,7 +14,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ !startsWith(github.event.head_commit.message, '[skip ci]') && !github.event.repository.fork }}
+    if: ${{ !startsWith(github.event.head_commit.message, '[skip ci]') && github.event.repository.fork == false }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,7 +39,6 @@ jobs:
           name: ${{ env.filename }}
           path: app/build/outputs/apk/release/${{ env.filename }}
       - name: Send APK to Telegram
-        if: ${{ success() }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
