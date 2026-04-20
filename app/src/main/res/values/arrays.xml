@@ -8,10 +8,6 @@
         <item>90</item>
         <item>120</item>
     </integer-array>
-    <string-array name="xposed_scope">
-        <item>com.android.launcher</item>
-        <item>com.android.launcher3</item>
-    </string-array>
     <string-array name="home_action_entries">
         <item>@string/action_launch</item>
         <item>@string/action_freeze</item>
@@ -39,30 +35,11 @@
         <item>@string/mode_shizuku_disable</item>
         <item>@string/mode_shizuku_hide</item>
         <item>@string/mode_shizuku_suspend</item>
-        <item>@string/mode_su_stop</item>
-        <item>@string/mode_su_disable</item>
-        <item>@string/mode_su_hide</item>
-        <item>@string/mode_su_suspend</item>
-        <item>@string/mode_dhizuku_hide</item>
-        <item>@string/mode_dhizuku_suspend</item>
-        <item>@string/mode_owner_hide</item>
-        <item>@string/mode_owner_suspend</item>
-        <item>@string/mode_island_hide</item>
-        <item>@string/mode_island_suspend</item>
-        <item>@string/mode_privapp_stop</item>
-        <item>@string/mode_privapp_disable</item>
     </string-array>
     <string-array name="app_theme_entries">
         <item>@string/follow_system</item>
         <item>@string/theme_light</item>
         <item>@string/theme_dark</item>
-    </string-array>
-    <string-array name="donate_payment_entries">
-        <item>@string/donate_alipay</item>
-        <item>@string/donate_wechat</item>
-        <item>@string/donate_bilibili</item>
-        <item>@string/donate_liberapay</item>
-        <item>@string/donate_paypal</item>
     </string-array>
     <string-array name="pin_shortcut_entries">
         <item>@string/action_freeze_tag</item>

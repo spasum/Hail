@@ -1,4 +1,4 @@
-package com.aistra.hail.ui.api
+package io.spasum.hailshizuku.ui.api
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -24,18 +24,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.R
-import com.aistra.hail.app.AppInfo
-import com.aistra.hail.app.AppManager
-import com.aistra.hail.app.HailApi
-import com.aistra.hail.app.HailData
-import com.aistra.hail.ui.theme.AppTheme
-import com.aistra.hail.utils.HPackages
-import com.aistra.hail.utils.HShortcuts
-import com.aistra.hail.utils.HTarget
-import com.aistra.hail.utils.HUI
-import com.aistra.hail.work.HWork.setAutoFreeze
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.R
+import io.spasum.hailshizuku.app.AppInfo
+import io.spasum.hailshizuku.app.AppManager
+import io.spasum.hailshizuku.app.HailApi
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.ui.theme.AppTheme
+import io.spasum.hailshizuku.utils.HPackages
+import io.spasum.hailshizuku.utils.HShortcuts
+import io.spasum.hailshizuku.utils.HTarget
+import io.spasum.hailshizuku.utils.HUI
+import io.spasum.hailshizuku.work.HWork.setAutoFreeze
 
 class ApiActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

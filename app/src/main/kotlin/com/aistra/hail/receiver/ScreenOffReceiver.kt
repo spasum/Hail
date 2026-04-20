@@ -1,9 +1,9 @@
-package com.aistra.hail.receiver
+package io.spasum.hailshizuku.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.aistra.hail.work.HWork
+import io.spasum.hailshizuku.work.HWork
 
 class ScreenOffReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

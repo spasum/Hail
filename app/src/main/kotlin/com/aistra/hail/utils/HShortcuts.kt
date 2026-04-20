@@ -1,4 +1,4 @@
-package com.aistra.hail.utils
+package io.spasum.hailshizuku.utils
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -8,11 +8,11 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.R
-import com.aistra.hail.app.AppInfo
-import com.aistra.hail.app.HailApi
-import com.aistra.hail.app.HailData
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.R
+import io.spasum.hailshizuku.app.AppInfo
+import io.spasum.hailshizuku.app.HailApi
+import io.spasum.hailshizuku.app.HailData
 import me.zhanghai.android.appiconloader.AppIconLoader
 
 object HShortcuts {

@@ -1,4 +1,4 @@
-package com.aistra.hail.utils
+package io.spasum.hailshizuku.utils
 
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
@@ -8,7 +8,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.PowerManager
 import androidx.core.content.getSystemService
-import com.aistra.hail.app.HailData
+import io.spasum.hailshizuku.app.HailData
 
 object HSystem {
     fun isInteractive(context: Context): Boolean {

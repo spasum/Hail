@@ -1,4 +1,4 @@
-package com.aistra.hail.services
+package io.spasum.hailshizuku.services
 
 import android.app.PendingIntent
 import android.content.Intent
@@ -8,10 +8,10 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
-import com.aistra.hail.R
-import com.aistra.hail.app.HailApi
-import com.aistra.hail.app.HailData
-import com.aistra.hail.receiver.ScreenOffReceiver
+import io.spasum.hailshizuku.R
+import io.spasum.hailshizuku.app.HailApi
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.receiver.ScreenOffReceiver
 
 class AutoFreezeService : NotificationListenerService() {
     private val channelID = javaClass.simpleName

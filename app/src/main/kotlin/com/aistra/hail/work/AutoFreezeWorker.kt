@@ -1,14 +1,14 @@
-package com.aistra.hail.work
+package io.spasum.hailshizuku.work
 
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.app.AppInfo
-import com.aistra.hail.app.AppManager
-import com.aistra.hail.app.HailData
-import com.aistra.hail.services.AutoFreezeService
-import com.aistra.hail.utils.HSystem
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.app.AppInfo
+import io.spasum.hailshizuku.app.AppManager
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.services.AutoFreezeService
+import io.spasum.hailshizuku.utils.HSystem
 
 class AutoFreezeWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result {

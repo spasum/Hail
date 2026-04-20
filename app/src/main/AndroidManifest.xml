@@ -2,8 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="rikka.shizuku.api, com.rosan.dhizuku.api"/>
-
     <uses-permission
             android:name="com.android.launcher.permission.INSTALL_SHORTCUT"
             android:maxSdkVersion="25"/>
@@ -17,18 +15,7 @@
     <uses-permission
             android:name="android.permission.PACKAGE_USAGE_STATS"
             tools:ignore="ProtectedPermissions"/>
-    <uses-permission
-            android:name="android.permission.FORCE_STOP_PACKAGES"
-            tools:ignore="ProtectedPermissions"/>
-    <uses-permission
-            android:name="android.permission.CHANGE_COMPONENT_ENABLED_STATE"
-            tools:ignore="ProtectedPermissions"/>
-    <uses-permission
-            android:name="android.permission.MANAGE_APP_OPS_MODES"
-            tools:ignore="ProtectedPermissions"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <uses-permission android:name="com.oasisfeng.island.permission.FREEZE_PACKAGE"/>
-    <uses-permission android:name="com.oasisfeng.island.permission.SUSPEND_PACKAGE"/>
 
     <application
             android:name=".HailApp"
@@ -80,22 +67,9 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:scheme="hail"/>
+                <data android:scheme="shizufreeze"/>
             </intent-filter>
         </activity>
-
-        <meta-data
-                android:name="xposedmodule"
-                android:value="true"/>
-        <meta-data
-                android:name="xposeddescription"
-                android:value="@string/xposed_description"/>
-        <meta-data
-                android:name="xposedminversion"
-                android:value="53"/>
-        <meta-data
-                android:name="xposedscope"
-                android:resource="@array/xposed_scope"/>
 
         <provider
                 android:name="rikka.shizuku.ShizukuProvider"
@@ -103,19 +77,6 @@
                 android:exported="true"
                 android:multiprocess="false"
                 android:permission="android.permission.INTERACT_ACROSS_USERS_FULL"/>
-
-        <receiver
-                android:name=".receiver.DeviceAdminReceiver"
-                android:description="@string/action_lock"
-                android:exported="false"
-                android:permission="android.permission.BIND_DEVICE_ADMIN">
-            <meta-data
-                    android:name="android.app.device_admin"
-                    android:resource="@xml/device_admin"/>
-            <intent-filter>
-                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
-            </intent-filter>
-        </receiver>
         <receiver
                 android:name=".receiver.ScreenOffReceiver"
                 android:exported="false"/>

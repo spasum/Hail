@@ -1,4 +1,4 @@
-package com.aistra.hail.ui.apps
+package io.spasum.hailshizuku.ui.apps
 
 import android.content.pm.ApplicationInfo
 import android.view.LayoutInflater
@@ -7,11 +7,11 @@ import android.widget.CompoundButton
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.aistra.hail.app.AppManager
-import com.aistra.hail.app.HailData
-import com.aistra.hail.databinding.ItemAppsBinding
-import com.aistra.hail.utils.AppIconCache
-import com.aistra.hail.utils.HPackages
+import io.spasum.hailshizuku.app.AppManager
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.databinding.ItemAppsBinding
+import io.spasum.hailshizuku.utils.AppIconCache
+import io.spasum.hailshizuku.utils.HPackages
 import com.google.android.material.color.MaterialColors
 import kotlinx.coroutines.Job
 

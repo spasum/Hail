@@ -1,4 +1,4 @@
-package com.aistra.hail.extensions
+package io.spasum.hailshizuku.extensions
 
 import android.view.View
 

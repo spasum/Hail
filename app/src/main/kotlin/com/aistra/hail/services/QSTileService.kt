@@ -1,4 +1,4 @@
-package com.aistra.hail.services
+package io.spasum.hailshizuku.services
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
@@ -8,11 +8,11 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import androidx.annotation.RequiresApi
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.R
-import com.aistra.hail.app.HailApi
-import com.aistra.hail.app.HailData
-import com.aistra.hail.utils.HTarget
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.R
+import io.spasum.hailshizuku.app.HailApi
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.utils.HTarget
 
 @RequiresApi(Build.VERSION_CODES.N)
 class QSTileService : TileService() {

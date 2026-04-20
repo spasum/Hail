@@ -1,11 +1,11 @@
-package com.aistra.hail.app
+package io.spasum.hailshizuku.app
 
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import com.aistra.hail.BuildConfig
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.R
-import com.aistra.hail.utils.HFiles
+import io.spasum.hailshizuku.BuildConfig
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.R
+import io.spasum.hailshizuku.utils.HFiles
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -14,15 +14,6 @@ object HailData {
     const val URL_GITHUB = "https://github.com/aistra0528/Hail"
     const val URL_README = "$URL_GITHUB#readme"
     const val URL_RELEASES = "$URL_GITHUB/releases"
-    const val URL_TELEGRAM = "https://t.me/+yvRXYTounDIxODFl"
-    const val URL_QQ = "http://qm.qq.com/cgi-bin/qm/qr?k=I2g_Ymanc6bQMo4cVKTG0knARE0twtSG"
-    const val URL_FDROID = "https://f-droid.org/packages/${BuildConfig.APPLICATION_ID}"
-    const val URL_ALIPAY = "https://qr.alipay.com/tsx02922ajwj6xekqyd1rbf"
-    const val URL_ALIPAY_API = "alipays://platformapi/startapp?saId=10000007&qrcode=$URL_ALIPAY"
-    const val URL_BILIBILI = "https://space.bilibili.com/9261272"
-    const val URL_LIBERAPAY = "https://liberapay.com/aistra0528"
-    const val URL_PAYPAL = "https://www.paypal.me/aistra0528"
-    const val URL_TRANSLATE = "https://hosted.weblate.org/engage/hail/"
     const val VERSION = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
     private const val KEY_ID = "id"
     const val KEY_TAG = "tag"
@@ -39,12 +30,7 @@ object HailData {
     const val FILTER_SYSTEM_APPS = "filter_system_apps"
     const val FILTER_FROZEN_APPS = "filter_frozen_apps"
     const val FILTER_UNFROZEN_APPS = "filter_unfrozen_apps"
-    const val OWNER = "owner_"
-    const val DHIZUKU = "dhizuku_"
-    const val SU = "su_"
     const val SHIZUKU = "shizuku_"
-    const val ISLAND = "island_"
-    const val PRIVAPP = "privapp_"
     const val STOP = "stop"
     const val DISABLE = "disable"
     const val HIDE = "hide"
@@ -55,36 +41,12 @@ object HailData {
     const val MODE_SHIZUKU_DISABLE = SHIZUKU + DISABLE
     const val MODE_SHIZUKU_HIDE = SHIZUKU + HIDE
     const val MODE_SHIZUKU_SUSPEND = SHIZUKU + SUSPEND
-    const val MODE_SU_STOP = SU + STOP
-    const val MODE_SU_DISABLE = SU + DISABLE
-    const val MODE_SU_HIDE = SU + HIDE
-    const val MODE_SU_SUSPEND = SU + SUSPEND
-    const val MODE_DHIZUKU_HIDE = DHIZUKU + HIDE
-    const val MODE_DHIZUKU_SUSPEND = DHIZUKU + SUSPEND
-    const val MODE_OWNER_HIDE = OWNER + HIDE
-    const val MODE_OWNER_SUSPEND = OWNER + SUSPEND
-    const val MODE_ISLAND_HIDE = ISLAND + HIDE
-    const val MODE_ISLAND_SUSPEND = ISLAND + SUSPEND
-    const val MODE_PRIVAPP_STOP = PRIVAPP + STOP
-    const val MODE_PRIVAPP_DISABLE = PRIVAPP + DISABLE
     val WORKING_MODE_VALUES = listOf(
         MODE_DEFAULT,
         MODE_SHIZUKU_STOP,
         MODE_SHIZUKU_DISABLE,
         MODE_SHIZUKU_HIDE,
-        MODE_SHIZUKU_SUSPEND,
-        MODE_SU_STOP,
-        MODE_SU_DISABLE,
-        MODE_SU_HIDE,
-        MODE_SU_SUSPEND,
-        MODE_DHIZUKU_HIDE,
-        MODE_DHIZUKU_SUSPEND,
-        MODE_OWNER_HIDE,
-        MODE_OWNER_SUSPEND,
-        MODE_ISLAND_HIDE,
-        MODE_ISLAND_SUSPEND,
-        MODE_PRIVAPP_STOP,
-        MODE_PRIVAPP_DISABLE
+        MODE_SHIZUKU_SUSPEND
     )
     const val BIOMETRIC_LOGIN = "biometric_login"
     const val APP_THEME = "app_theme"

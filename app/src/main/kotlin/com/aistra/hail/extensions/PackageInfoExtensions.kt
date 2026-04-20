@@ -1,9 +1,9 @@
-package com.aistra.hail.extensions
+package io.spasum.hailshizuku.extensions
 
 import android.content.pm.PackageInfo
 import androidx.core.content.pm.PackageInfoCompat
 
-import com.aistra.hail.HailApp.Companion.app
+import io.spasum.hailshizuku.HailApp.Companion.app
 
 /**
  * The name of the file when exported to sd card, in the format `AppName-VersionName-VersionNumber.apk`.

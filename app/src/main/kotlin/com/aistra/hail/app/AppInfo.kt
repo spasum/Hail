@@ -1,8 +1,8 @@
-package com.aistra.hail.app
+package io.spasum.hailshizuku.app
 
 import android.content.pm.ApplicationInfo
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.utils.HPackages
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.utils.HPackages
 
 class AppInfo(
     val packageName: String,

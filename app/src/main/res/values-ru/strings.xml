@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hail</string>
+    <string name="app_name">ShizuFreeze</string>
     <string name="app_slogan">Freezedom!</string>
     <string name="title_home">Главная</string>
     <string name="title_apps">Приложения</string>
@@ -9,11 +9,7 @@
     <string name="label_default">По умолчанию</string>
     <string name="label_version">Версия</string>
     <string name="label_time">Время установки</string>
-    <string name="action_telegram">Группа в Telegram</string>
-    <string name="action_qq">Группа в QQ</string>
-    <string name="action_donate">Задонатить</string>
     <string name="action_github">GitHub</string>
-    <string name="action_translate">Перевод</string>
     <string name="action_licenses">Лицензии</string>
     <string name="action_freeze_all">Заморозить все</string>
     <string name="action_unfreeze_all">Разморозить все</string>
@@ -42,14 +38,7 @@
     <string name="msg_uninstall">Вы хотите удалить это приложение?</string>
     <string name="working_mode">Режим работы</string>
     <string name="mode_default">Отключено</string>
-    <string name="mode_owner_hide">Владелец устройства - Скрыть</string>
-    <string name="mode_su_disable">Root - Отключить</string>
     <string name="mode_shizuku_disable">Shizuku - Отключить</string>
-    <string name="title_set_owner">Установить вадельца устройства</string>
-    <string name="msg_set_owner">Выполните команду из adb:\n%s</string>
-    <string name="title_remove_owner">Удаление владельца устройства</string>
-    <string name="msg_remove_owner">Если Hail удален как владелец устройства, после его удаления могут возникнуть трудности с реорганизацией приложений.
-\nЗамороженные приложения останутся замороженными после удаления, пожалуйста, убедитесь, что вы разморозили важные приложения.</string>
     <string name="tap_to_select">Нажмите, чтобы выбрать несколько</string>
     <string name="filter_by">Фильтр</string>
     <string name="filter_user_apps">Пользовательские</string>
@@ -60,16 +49,6 @@
     <string name="sort_name">Название</string>
     <string name="sort_install">Дата установки</string>
     <string name="sort_update">Дата обновления</string>
-    <string name="title_donate">Спасибо!</string>
-    <string name="donate_alipay">Alipay</string>
-    <string name="donate_wechat">WeChat Pay</string>
-    <string name="donate_wechat_scan">Сканировать</string>
-    <string name="donate_bilibili">Bilibili</string>
-    <string name="donate_bilibili_msg">Подпишитесь на мой Bilibili.</string>
-    <string name="donate_bilibili_space">Пространство Bilibili</string>
-    <string name="donate_bilibili_cancel">Отменить</string>
-    <string name="donate_liberapay">Liberapay</string>
-    <string name="donate_paypal">PayPal</string>
     <string name="permission_denied">Разрешение отклонено</string>
     <string name="app_not_installed">Приложение не установлено</string>
     <string name="activity_not_found">Активити для запуска не обнаружено</string>
@@ -118,8 +97,6 @@
     <string name="auto_freeze_delay">Задержка заморозки (минуты)</string>
     <string name="action_whitelist">Добавить в белый список</string>
     <string name="action_remove_whitelist">Удалить из белого списка</string>
-    <string name="mode_owner_suspend">Владелец устройства - Приостановить</string>
-    <string name="mode_su_suspend">Root - Приостановить</string>
     <string name="mode_shizuku_suspend">Shizuku - Приостановить</string>
     <string name="action_unfreeze_remove_home">Разморозить и удалить с главной страницы</string>
     <string name="action_freeze_non_whitelisted">Заморозка не внесенных в Белый список</string>
@@ -133,24 +110,13 @@
     <string name="icon_pack">Пакет иконок</string>
     <string name="action_select_all">Выбрать все</string>
     <string name="action_terminal">Терминал</string>
-    <string name="mode_dhizuku_hide">Dhizuku - Скрыть</string>
-    <string name="mode_dhizuku_suspend">Dhizuku - Приостановить</string>
     <string name="action_skip">Пропустить</string>
-    <string name="mode_su_hide">Root - Скрыть</string>
-    <string name="mode_island_hide">Island/Insular - Скрыть</string>
-    <string name="mode_island_suspend">Island/Insular - Отключить</string>
-    <string name="action_fdroid">F-Droid</string>
     <string name="shizuku_hide_adb">Shizuku работает по adb. Чтобы скрыть приложения, пожалуйста, перезапустите Shizuku с рут правами.</string>
-    <string name="freeze_system_app">Заморозка или удаление системных приложений может привести к бутлупу. Убедитесь, что вы знаете, что делаете, и заранее сделайте резервную копию своих данных или используйте рекавери, поддерживающее управление файлами.</string>
-    <string name="action_continue">Продолжить</string>
     <string name="command">Команда</string>
     <string name="tag">Тег</string>
     <string name="nine_key">Поиск T9</string>
     <string name="home_font_size">Размер шрифта на главной странице</string>
-    <string name="mode_privapp_disable">Системное приложение - Отключить</string>
     <string name="mode_shizuku_stop">Shizuku - Принудительно остановить</string>
-    <string name="mode_privapp_stop">Системное приложение - Принудительно остановить</string>
-    <string name="mode_su_stop">Root - Принудительно остановить</string>
     <string name="fuzzy_search">Нечёткий поиск</string>
     <string name="action_reinstall">Переустановить</string>
     <string name="app_theme">Тема приложения</string>

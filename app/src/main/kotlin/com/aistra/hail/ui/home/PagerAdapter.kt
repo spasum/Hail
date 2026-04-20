@@ -1,4 +1,4 @@
-package com.aistra.hail.ui.home
+package io.spasum.hailshizuku.ui.home
 
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -9,11 +9,11 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.aistra.hail.R
-import com.aistra.hail.app.AppInfo
-import com.aistra.hail.app.HailData
-import com.aistra.hail.utils.AppIconCache
-import com.aistra.hail.utils.HPackages.myUserId
+import io.spasum.hailshizuku.R
+import io.spasum.hailshizuku.app.AppInfo
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.utils.AppIconCache
+import io.spasum.hailshizuku.utils.HPackages.myUserId
 import com.google.android.material.color.MaterialColors
 import kotlinx.coroutines.Job
 

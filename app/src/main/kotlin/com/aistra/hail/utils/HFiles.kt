@@ -1,4 +1,4 @@
-package com.aistra.hail.utils
+package io.spasum.hailshizuku.utils
 
 import android.os.FileUtils
 import kotlinx.coroutines.Dispatchers

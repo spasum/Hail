@@ -1,4 +1,4 @@
-package com.aistra.hail
+package io.spasum.hailshizuku
 
 import android.app.Application
 import android.app.UiModeManager
@@ -9,11 +9,10 @@ import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import com.aistra.hail.app.AppManager
-import com.aistra.hail.app.HailData
-import com.aistra.hail.services.AutoFreezeService
-import com.aistra.hail.utils.HDhizuku
-import com.aistra.hail.utils.HTarget
+import io.spasum.hailshizuku.app.AppManager
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.services.AutoFreezeService
+import io.spasum.hailshizuku.utils.HTarget
 
 class HailApp : Application() {
     override fun onCreate() {
@@ -21,7 +20,6 @@ class HailApp : Application() {
         app = this
         // DirtyDataUpdater.update(app)
         if (!HTarget.S) setAppTheme(HailData.appTheme)
-        if (HailData.workingMode.startsWith(HailData.DHIZUKU)) HDhizuku.init()
     }
 
     fun setAutoFreezeService(autoFreezeAfterLock: Boolean = HailData.autoFreezeAfterLock, context: Context = app) {

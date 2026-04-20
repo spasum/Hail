@@ -1,12 +1,12 @@
-package com.aistra.hail.work
+package io.spasum.hailshizuku.work
 
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.app.HailApi
-import com.aistra.hail.app.HailData
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.app.HailApi
+import io.spasum.hailshizuku.app.HailData
 import java.util.concurrent.TimeUnit
 
 object HWork {

@@ -1,4 +1,4 @@
-package com.aistra.hail.utils
+package io.spasum.hailshizuku.utils
 
 import android.annotation.SuppressLint
 import android.app.AppOpsManager
@@ -11,7 +11,7 @@ import android.os.SystemClock
 import android.view.InputEvent
 import android.view.KeyEvent
 import androidx.annotation.RequiresApi
-import com.aistra.hail.BuildConfig
+import io.spasum.hailshizuku.BuildConfig
 import moe.shizuku.server.IShizukuService
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import rikka.shizuku.Shizuku

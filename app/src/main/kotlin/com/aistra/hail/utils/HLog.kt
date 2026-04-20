@@ -1,9 +1,6 @@
-package com.aistra.hail.utils
-
-import android.util.Log
+package io.spasum.hailshizuku.utils
 
 object HLog {
-    private const val TAG = "Hail"
-    fun i(tag: String, string: String) = Log.i(tag, string)
-    fun e(t: Throwable) = Log.e(TAG, t.stackTraceToString())
+    fun i(tag: String, string: String) = Unit
+    fun e(t: Throwable) = Unit
 }
