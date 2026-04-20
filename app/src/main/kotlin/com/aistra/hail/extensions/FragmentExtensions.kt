@@ -1,4 +1,4 @@
-package com.aistra.hail.extensions
+package io.spasum.hailshizuku.extensions
 
 import androidx.fragment.app.Fragment
 

@@ -1,4 +1,4 @@
-package com.aistra.hail.ui.theme
+package io.spasum.hailshizuku.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,4 +1,4 @@
-package com.aistra.hail.views
+package io.spasum.hailshizuku.views
 
 import android.content.Context
 import android.util.AttributeSet

@@ -1,8 +1,8 @@
-package com.aistra.hail.utils
+package io.spasum.hailshizuku.utils
 
 import android.content.pm.ApplicationInfo
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.app.AppInfo
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.app.AppInfo
 import java.text.Collator
 
 object NameComparator : Comparator<Any> {

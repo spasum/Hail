@@ -1,6 +1,6 @@
-package com.aistra.hail.utils
+package io.spasum.hailshizuku.utils
 
-import com.aistra.hail.app.HailData
+import io.spasum.hailshizuku.app.HailData
 import org.apache.commons.text.similarity.LevenshteinDistance
 
 /** 使用莱文斯坦距离 (Levenshtein distance) 实现模糊搜索 */

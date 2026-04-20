@@ -1,18 +1,18 @@
-package com.aistra.hail.ui.home
+package io.spasum.hailshizuku.ui.home
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
-import com.aistra.hail.app.AppInfo
-import com.aistra.hail.app.HailData.tags
-import com.aistra.hail.databinding.FragmentHomeBinding
-import com.aistra.hail.extensions.applyDefaultInsetter
-import com.aistra.hail.extensions.isLandscape
-import com.aistra.hail.extensions.isRtl
-import com.aistra.hail.extensions.paddingRelative
-import com.aistra.hail.ui.main.MainFragment
+import io.spasum.hailshizuku.app.AppInfo
+import io.spasum.hailshizuku.app.HailData.tags
+import io.spasum.hailshizuku.databinding.FragmentHomeBinding
+import io.spasum.hailshizuku.extensions.applyDefaultInsetter
+import io.spasum.hailshizuku.extensions.isLandscape
+import io.spasum.hailshizuku.extensions.isRtl
+import io.spasum.hailshizuku.extensions.paddingRelative
+import io.spasum.hailshizuku.ui.main.MainFragment
 import com.google.android.material.tabs.TabLayoutMediator
 
 class HomeFragment : MainFragment() {

@@ -1,14 +1,14 @@
-package com.aistra.hail.ui.apps
+package io.spasum.hailshizuku.ui.apps
 
 import android.app.Application
 import android.content.pm.ApplicationInfo
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.aistra.hail.HailApp
-import com.aistra.hail.app.AppManager
-import com.aistra.hail.app.HailData
-import com.aistra.hail.utils.*
+import io.spasum.hailshizuku.HailApp
+import io.spasum.hailshizuku.app.AppManager
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.utils.*
 import kotlinx.coroutines.*
 
 class AppsViewModel(application: Application) : AndroidViewModel(application) {

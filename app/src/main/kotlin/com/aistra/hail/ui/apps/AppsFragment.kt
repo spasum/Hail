@@ -1,4 +1,4 @@
-package com.aistra.hail.ui.apps
+package io.spasum.hailshizuku.ui.apps
 
 import android.os.Bundle
 import android.provider.Settings
@@ -14,18 +14,17 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.R
-import com.aistra.hail.app.AppManager
-import com.aistra.hail.app.HailData
-import com.aistra.hail.databinding.FragmentAppsBinding
-import com.aistra.hail.extensions.*
-import com.aistra.hail.ui.main.MainFragment
-import com.aistra.hail.utils.HFiles
-import com.aistra.hail.utils.HPackages
-import com.aistra.hail.utils.HPolicy
-import com.aistra.hail.utils.HUI
-import com.aistra.hail.views.HRecyclerView
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.R
+import io.spasum.hailshizuku.app.AppManager
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.databinding.FragmentAppsBinding
+import io.spasum.hailshizuku.extensions.*
+import io.spasum.hailshizuku.ui.main.MainFragment
+import io.spasum.hailshizuku.utils.HFiles
+import io.spasum.hailshizuku.utils.HPackages
+import io.spasum.hailshizuku.utils.HUI
+import io.spasum.hailshizuku.views.HRecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -174,14 +173,7 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
         when {
             HPackages.isAppUninstalled(pkg) -> HUI.showToast(R.string.app_not_installed)
 
-            pkg == app.packageName -> {
-                when {
-                    HPolicy.isDeviceOwnerActive -> activity.ownerRemoveDialog()
-                    HPolicy.isProfileOwner -> HPolicy.removeProfileOwner()
-                    HPolicy.isAdminActive -> HPolicy.removeActiveAdmin()
-                    else -> showUninstallDialog(name, pkg)
-                }
-            }
+            pkg == app.packageName -> showUninstallDialog(name, pkg)
 
             HailData.workingMode == HailData.MODE_DEFAULT -> AppManager.uninstallApp(pkg)
             else -> showUninstallDialog(name, pkg)
@@ -245,10 +237,7 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
             R.id.sort_by_install -> changeAppsSort(HailData.SORT_INSTALL, item)
             R.id.sort_by_update -> changeAppsSort(HailData.SORT_UPDATE, item)
             R.id.filter_user_apps -> changeAppsFilter(HailData.FILTER_USER_APPS, item)
-            R.id.filter_system_apps -> MaterialAlertDialogBuilder(activity).setMessage(R.string.freeze_system_app)
-                .setPositiveButton(R.string.action_continue) { _, _ ->
-                    changeAppsFilter(HailData.FILTER_SYSTEM_APPS, item)
-                }.setNegativeButton(android.R.string.cancel, null).show()
+            R.id.filter_system_apps -> changeAppsFilter(HailData.FILTER_SYSTEM_APPS, item)
 
             R.id.filter_frozen_apps -> changeAppsFilter(HailData.FILTER_FROZEN_APPS, item)
             R.id.filter_unfrozen_apps -> changeAppsFilter(HailData.FILTER_UNFROZEN_APPS, item)

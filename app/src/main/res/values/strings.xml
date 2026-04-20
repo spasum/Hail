@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hail</string>
+    <string name="app_name">ShizuFreeze</string>
     <string name="app_slogan">Freezedom!</string>
     <string name="title_home">Home</string>
     <string name="title_apps">Apps</string>
@@ -9,11 +9,7 @@
     <string name="label_default">Default</string>
     <string name="label_version">Version</string>
     <string name="label_time">Install time</string>
-    <string name="action_telegram">Telegram Group</string>
-    <string name="action_qq">QQ Group</string>
-    <string name="action_donate">Donate</string>
     <string name="action_github">GitHub</string>
-    <string name="action_translate">Translate</string>
     <string name="action_licenses">Licenses</string>
     <string name="action_freeze_all">Freeze all</string>
     <string name="action_unfreeze_all">Unfreeze all</string>
@@ -44,22 +40,10 @@
     <string name="msg_uninstall">Do you want to uninstall this app?</string>
     <string name="working_mode">Working mode</string>
     <string name="mode_default">Idle</string>
-    <string name="mode_owner_hide">Device Owner - Hide</string>
-    <string name="mode_owner_suspend">Device Owner - Suspend</string>
-    <string name="mode_su_stop">Root - Force Stop</string>
-    <string name="mode_su_disable">Root - Disable</string>
-    <string name="mode_su_suspend">Root - Suspend</string>
     <string name="mode_shizuku_stop">Shizuku - Force Stop</string>
     <string name="mode_shizuku_disable">Shizuku - Disable</string>
     <string name="mode_shizuku_hide">Shizuku - Hide</string>
     <string name="mode_shizuku_suspend">Shizuku - Suspend</string>
-    <string name="mode_privapp_stop">System App - Force Stop</string>
-    <string name="mode_privapp_disable">System App - Disable</string>
-    <string name="title_set_owner">Set Device Owner</string>
-    <string name="msg_set_owner">Issue the command from adb:\n%s</string>
-    <string name="title_remove_owner">Remove Device Owner</string>
-    <string name="msg_remove_owner">If Hail is removed as the device owner, there may be difficulties reorganizing Apps after Hail removal.
-\nFrozen apps will remain frozen after removal, please make sure you have unfrozen the important apps.</string>
     <string name="tap_to_select">Tap to multiselect</string>
     <string name="filter_by">Filter</string>
     <string name="filter_user_apps">User</string>
@@ -70,16 +54,6 @@
     <string name="sort_name">Name</string>
     <string name="sort_install">First install</string>
     <string name="sort_update">Last update</string>
-    <string name="title_donate">Thank you!</string>
-    <string name="donate_alipay">Alipay</string>
-    <string name="donate_wechat">WeChat Pay</string>
-    <string name="donate_wechat_scan">Scan</string>
-    <string name="donate_bilibili">Bilibili</string>
-    <string name="donate_bilibili_msg">Follow me on Bilibili.</string>
-    <string name="donate_bilibili_space">Bilibili space</string>
-    <string name="donate_bilibili_cancel">Cancel</string>
-    <string name="donate_liberapay">Liberapay</string>
-    <string name="donate_paypal">PayPal</string>
     <string name="permission_denied">Permission denied</string>
     <string name="app_not_installed">App not installed</string>
     <string name="activity_not_found">Launch activity not found</string>
@@ -133,19 +107,10 @@
     <string name="icon_pack">Icon pack</string>
     <string name="action_select_all">Select all</string>
     <string name="action_terminal">Terminal</string>
-    <string name="mode_dhizuku_hide">Dhizuku - Hide</string>
-    <string name="mode_dhizuku_suspend">Dhizuku - Suspend</string>
-    <string name="mode_su_hide">Root - Hide</string>
-    <string name="action_fdroid">F-Droid</string>
     <string name="action_skip">Skip</string>
-    <string name="xposed_description">Automatically unfreeze suspended app for scoped apps</string>
-    <string name="mode_island_hide">Island/Insular - Hide</string>
-    <string name="mode_island_suspend">Island/Insular - Suspend</string>
     <string name="shizuku_hide_adb">Shizuku is running as adb. To hide apps, please restart Shizuku with root.</string>
     <string name="command">Command</string>
     <string name="tag">Tag</string>
-    <string name="freeze_system_app">Freezing or uninstalling system applications may cause the device to bootloop. Make sure you know what you are doing and backup your data in advance or use recovery that supports file management.</string>
-    <string name="action_continue">Continue</string>
     <string name="nine_key">T9 Search</string>
     <string name="home_font_size">Home font size</string>
     <string name="action_reinstall">Reinstall</string>

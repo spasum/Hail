@@ -1,4 +1,4 @@
-package com.aistra.hail.ui.main
+package io.spasum.hailshizuku.ui.main
 
 import android.os.Bundle
 import android.view.Menu
@@ -17,12 +17,11 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import com.aistra.hail.R
-import com.aistra.hail.app.HailData
-import com.aistra.hail.databinding.ActivityMainBinding
-import com.aistra.hail.extensions.*
-import com.aistra.hail.utils.HPolicy
-import com.aistra.hail.utils.HUI
+import io.spasum.hailshizuku.R
+import io.spasum.hailshizuku.app.HailData
+import io.spasum.hailshizuku.databinding.ActivityMainBinding
+import io.spasum.hailshizuku.extensions.*
+import io.spasum.hailshizuku.utils.HUI
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
@@ -89,14 +88,6 @@ class MainActivity : AppCompatActivity(), NavController.OnDestinationChangedList
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menu?.let { MenuCompat.setGroupDividerEnabled(it, true) }
         return super.onCreateOptionsMenu(menu)
-    }
-
-    fun ownerRemoveDialog() {
-        MaterialAlertDialogBuilder(this).setTitle(R.string.title_remove_owner).setMessage(R.string.msg_remove_owner)
-            .setPositiveButton(R.string.action_continue) { _, _ ->
-                HPolicy.setOrganizationName()
-                HPolicy.removeDeviceOwner()
-            }.setNegativeButton(android.R.string.cancel, null).show()
     }
 
     /* override fun onStop() {

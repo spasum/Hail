@@ -1,7 +1,7 @@
-package com.aistra.hail.app
+package io.spasum.hailshizuku.app
 
 import android.content.Intent
-import com.aistra.hail.BuildConfig
+import io.spasum.hailshizuku.BuildConfig
 
 object HailApi {
     /** @since 0.5.0 */

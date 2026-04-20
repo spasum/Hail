@@ -1,12 +1,12 @@
-package com.aistra.hail.utils
+package io.spasum.hailshizuku.utils
 
 import android.annotation.SuppressLint
 import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.app.HailData
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.app.HailData
 
 object IconPack {
     @SuppressLint("DiscouragedApi")

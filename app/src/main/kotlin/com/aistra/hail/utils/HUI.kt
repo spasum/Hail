@@ -1,4 +1,4 @@
-package com.aistra.hail.utils
+package io.spasum.hailshizuku.utils
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -7,8 +7,8 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.core.content.getSystemService
 import androidx.core.view.WindowInsetsCompat
-import com.aistra.hail.HailApp.Companion.app
-import com.aistra.hail.R
+import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.R
 
 object HUI {
     /**

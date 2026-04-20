@@ -1,4 +1,4 @@
-package com.aistra.hail.app
+package io.spasum.hailshizuku.app
 
 import android.content.Context
 import androidx.preference.PreferenceManager

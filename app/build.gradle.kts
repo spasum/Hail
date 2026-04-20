@@ -15,11 +15,11 @@ android {
         commandLine = "git log -1 --pretty=%s".split(" ")
     }.standardOutput.asText.get().trim()
 
-    namespace = "com.aistra.hail"
+    namespace = "io.spasum.hailshizuku"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.aistra.hail"
+        applicationId = "io.spasum.hailshizuku"
         minSdk = 23
         targetSdk = 36
         versionCode = 34
@@ -52,7 +52,7 @@ android {
     applicationVariants.configureEach {
         outputs.configureEach {
             (this as? com.android.build.gradle.internal.api.ApkVariantOutputImpl)?.outputFileName =
-                "Hail-v$versionName.apk"
+                "ShizuFreeze-v$versionName.apk"
         }
     }
     java {
@@ -101,11 +101,9 @@ dependencies {
     implementation(libs.insetter)
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
-    implementation(libs.dhizuku.api)
     implementation(libs.appiconloader)
     implementation(libs.compose.preference)
     implementation(libs.commons.text)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.hiddenapibypass)
-    compileOnly(libs.xposed)
 }

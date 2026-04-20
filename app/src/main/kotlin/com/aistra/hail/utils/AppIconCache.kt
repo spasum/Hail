@@ -1,4 +1,4 @@
-package com.aistra.hail.utils
+package io.spasum.hailshizuku.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -8,8 +8,8 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.widget.ImageView
 import androidx.collection.LruCache
-import com.aistra.hail.R
-import com.aistra.hail.app.HailData
+import io.spasum.hailshizuku.R
+import io.spasum.hailshizuku.app.HailData
 import kotlinx.coroutines.*
 import me.zhanghai.android.appiconloader.AppIconLoader
 import java.util.concurrent.Executor
