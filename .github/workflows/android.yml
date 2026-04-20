@@ -46,7 +46,7 @@ jobs:
           FILENAME: ${{ env.filename }}
         run: |
           if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
-            echo "Telegram secrets are not configured, skipping delivery."
+            echo "Telegram secrets are not configured, skipping APK delivery to Telegram."
             exit 0
           fi
           curl --fail --silent --show-error \
