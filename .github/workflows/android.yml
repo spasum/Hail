@@ -31,7 +31,7 @@ jobs:
           echo storePassword=${{ secrets.KEYSTORE_PASSWORD }} >> signing.properties
           echo keyAlias=${{ secrets.KEYSTORE_ALIAS }} >> signing.properties
           echo keyPassword=${{ secrets.KEYSTORE_ALIAS_PASSWORD }} >> signing.properties
-          echo ${{ secrets.KEYSTORE }} | base64 --decode > keystore.jks
+          printf '%s' '${{ secrets.KEYSTORE }}' | base64 --decode > keystore.jks
           ./gradlew assembleRelease
           echo "filename=$(jq -r '.elements.[0].outputFile' app/build/outputs/apk/release/output-metadata.json)" >> $GITHUB_ENV
       - name: Upload a Build Artifact
