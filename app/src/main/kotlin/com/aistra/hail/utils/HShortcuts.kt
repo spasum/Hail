@@ -19,6 +19,7 @@ import io.spasum.hailshizuku.app.AppManager
 import io.spasum.hailshizuku.app.HailApi
 import io.spasum.hailshizuku.app.HailData
 import me.zhanghai.android.appiconloader.AppIconLoader
+import java.util.concurrent.ConcurrentHashMap
 
 object HShortcuts {
     private val iconLoader by lazy {
@@ -29,40 +30,75 @@ object HShortcuts {
         )
     }
 
+    /**
+     * Cache of full-colour app icons keyed by package name.
+     * Populated before freeze so that the icon remains available after the package is hidden.
+     */
+    private val iconCache = ConcurrentHashMap<String, Bitmap>()
+
+    /**
+     * Load and cache the icon for [packageName] while the package is still visible to
+     * PackageManager.  Must be called *before* hiding/disabling the app.
+     */
+    fun precacheAppIcon(packageName: String) {
+        val appInfo = getApplicationInfoForShortcut(packageName) ?: return
+        refreshIconCache(packageName, appInfo)
+    }
+
+    /** Stores the full-colour icon in the cache using [appInfo]. */
+    private fun refreshIconCache(packageName: String, appInfo: ApplicationInfo) {
+        runCatching {
+            iconCache[packageName] =
+                IconPack.loadIcon(appInfo.packageName) ?: iconLoader.loadIcon(appInfo)
+        }
+    }
+
+    /**
+     * Returns the cached icon, loads it fresh from [appInfo], or falls back to the
+     * default Android icon if both are unavailable; never returns null.
+     */
+    private fun loadAppIcon(packageName: String, appInfo: ApplicationInfo?): Bitmap {
+        iconCache[packageName]?.let { return it }
+        return runCatching {
+            appInfo?.let { IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it) }
+                ?: getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
+        }.getOrElse {
+            getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
+        }
+    }
+
     fun addPinShortcut(icon: Drawable, id: String, label: CharSequence, intent: Intent) {
         addPinShortcut(getDrawableIcon(icon), id, label, intent)
     }
 
     fun addPinShortcut(appInfo: AppInfo, id: String, label: CharSequence, intent: Intent) {
         val applicationInfo = appInfo.applicationInfo ?: getApplicationInfoForShortcut(appInfo.packageName)
-        applicationInfo?.let {
-            var bmp = IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
-            if (AppManager.isAppFrozen(appInfo.packageName)) bmp = toGreyscale(bmp)
-            addPinShortcut(IconCompat.createWithBitmap(bmp), id, label, intent)
-        } ?: run {
-            addPinShortcut(app.packageManager.defaultActivityIcon, id, label, intent)
+        val bmp = runCatching {
+            loadAppIcon(appInfo.packageName, applicationInfo).let {
+                if (AppManager.isAppFrozen(appInfo.packageName)) toGreyscale(it) else it
+            }
+        }.getOrElse {
+            getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
         }
+        addPinShortcut(IconCompat.createWithBitmap(bmp), id, label, intent)
     }
 
     fun addPinShortcutForApp(packageName: String) {
-        val appInfo = getApplicationInfoForShortcut(packageName) ?: return
+        val appInfo = getApplicationInfoForShortcut(packageName)
         val frozen = AppManager.isAppFrozen(packageName)
         val bmp = runCatching {
-            (IconPack.loadIcon(appInfo.packageName) ?: iconLoader.loadIcon(appInfo)).let {
-                if (frozen) toGreyscale(it) else it
-            }
+            loadAppIcon(packageName, appInfo).let { if (frozen) toGreyscale(it) else it }
         }.getOrElse {
             getBitmapFromDrawable(app.packageManager.defaultActivityIcon).let {
                 if (frozen) toGreyscale(it) else it
             }
         }
         val icon = IconCompat.createWithBitmap(bmp)
-        val label = appInfo.loadLabel(app.packageManager)
+        val label = appInfo?.loadLabel(app.packageManager) ?: packageName
         val id = packageName.hashCode().toString()
         val intent = HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName)
         val shortcut = ShortcutInfoCompat.Builder(app, id).setIcon(icon).setShortLabel(label).setIntent(intent).build()
         runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
-        // Sync icon on any existing pinned shortcut immediately
         runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
         addPinShortcut(icon, id, label, intent)
     }
@@ -81,10 +117,14 @@ object HShortcuts {
     fun addDynamicShortcut(packageName: String) {
         if (HailData.biometricLogin) return
         val applicationInfo = getApplicationInfoForShortcut(packageName)
-        var bmp = applicationInfo?.let {
-            IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
-        } ?: getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
-        if (AppManager.isAppFrozen(packageName)) bmp = toGreyscale(bmp)
+        val frozen = AppManager.isAppFrozen(packageName)
+        // Refresh the cache when the app is visible (e.g. just before/after launch)
+        if (!frozen && applicationInfo != null) refreshIconCache(packageName, applicationInfo)
+        val bmp = runCatching {
+            loadAppIcon(packageName, applicationInfo).let { if (frozen) toGreyscale(it) else it }
+        }.getOrElse {
+            getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
+        }
         val shortcut =
             ShortcutInfoCompat.Builder(app, packageName.hashCode().toString())
                 .setIcon(IconCompat.createWithBitmap(bmp))
@@ -98,11 +138,10 @@ object HShortcuts {
     fun updateShortcutIcon(packageName: String, frozen: Boolean) {
         val id = packageName.hashCode().toString()
         val appInfo = getApplicationInfoForShortcut(packageName)
+        // When unfreezing, refresh the cache now that PM can see the package again
+        if (!frozen && appInfo != null) refreshIconCache(packageName, appInfo)
         val bmp = runCatching {
-            (appInfo?.let { IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it) }
-                ?: getBitmapFromDrawable(app.packageManager.defaultActivityIcon)).let {
-                if (frozen) toGreyscale(it) else it
-            }
+            loadAppIcon(packageName, appInfo).let { if (frozen) toGreyscale(it) else it }
         }.getOrElse {
             HLog.e(it)
             getBitmapFromDrawable(app.packageManager.defaultActivityIcon).let { fallback ->
