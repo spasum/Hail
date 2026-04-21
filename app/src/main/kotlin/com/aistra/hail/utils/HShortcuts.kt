@@ -44,14 +44,17 @@ object HShortcuts {
 
     fun addPinShortcutForApp(packageName: String) {
         val appInfo = HPackages.getApplicationInfoOrNull(packageName) ?: return
-        var bmp = IconPack.loadIcon(packageName) ?: iconLoader.loadIcon(appInfo)
-        if (AppManager.isAppFrozen(packageName)) bmp = toGreyscale(bmp)
-        addPinShortcut(
-            IconCompat.createWithBitmap(bmp),
-            packageName,
-            appInfo.loadLabel(app.packageManager),
-            HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName)
+        val bmp = IconPack.loadIcon(packageName) ?: iconLoader.loadIcon(appInfo)
+        val icon = IconCompat.createWithBitmap(bmp)
+        val label = appInfo.loadLabel(app.packageManager)
+        val id = packageName.hashCode().toString()
+        val intent = HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName)
+        // Push as dynamic shortcut first so updateShortcutIcon can find and update it later
+        ShortcutManagerCompat.pushDynamicShortcut(
+            app,
+            ShortcutInfoCompat.Builder(app, id).setIcon(icon).setShortLabel(label).setIntent(intent).build()
         )
+        addPinShortcut(icon, id, label, intent)
     }
 
     private fun addPinShortcut(icon: IconCompat, id: String, label: CharSequence, intent: Intent) {
