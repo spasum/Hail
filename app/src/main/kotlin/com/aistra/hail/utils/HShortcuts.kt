@@ -2,12 +2,14 @@ package io.spasum.hailshizuku.utils
 
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.ShortcutManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
+import android.os.Build
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -46,21 +48,30 @@ object HShortcuts {
 
     fun addPinShortcutForApp(packageName: String) {
         val appInfo = getApplicationInfoForShortcut(packageName) ?: return
+        val frozen = AppManager.isAppFrozen(packageName)
         val bmp = runCatching {
             (IconPack.loadIcon(appInfo.packageName) ?: iconLoader.loadIcon(appInfo)).let {
-                if (AppManager.isAppFrozen(packageName)) toGreyscale(it) else it
+                if (frozen) toGreyscale(it) else it
             }
-        }.getOrElse { getBitmapFromDrawable(app.packageManager.defaultActivityIcon) }
+        }.getOrElse {
+            getBitmapFromDrawable(app.packageManager.defaultActivityIcon).let {
+                if (frozen) toGreyscale(it) else it
+            }
+        }
         val icon = IconCompat.createWithBitmap(bmp)
         val label = appInfo.loadLabel(app.packageManager)
         val id = packageName.hashCode().toString()
         val intent = HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName)
         val shortcut = ShortcutInfoCompat.Builder(app, id).setIcon(icon).setShortLabel(label).setIntent(intent).build()
-        val isNew = runCatching {
-            ShortcutManagerCompat.getDynamicShortcuts(app).none { it.id == id }
-        }.getOrElse { true }
         runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
-        if (isNew) addPinShortcut(icon, id, label, intent)
+        // Sync icon on any existing pinned shortcut immediately
+        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
+        // Only request the user to pin if no pinned shortcut exists yet for this id
+        val isAlreadyPinned = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1 && runCatching {
+            app.getSystemService(ShortcutManager::class.java)
+                ?.pinnedShortcuts?.any { it.id == id } ?: false
+        }.getOrElse { false }
+        if (!isAlreadyPinned) addPinShortcut(icon, id, label, intent)
     }
 
     private fun addPinShortcut(icon: IconCompat, id: String, label: CharSequence, intent: Intent) {
