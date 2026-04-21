@@ -2,14 +2,12 @@ package io.spasum.hailshizuku.utils
 
 import android.content.Intent
 import android.content.pm.ApplicationInfo
-import android.content.pm.ShortcutManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
-import android.os.Build
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -66,12 +64,7 @@ object HShortcuts {
         runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
         // Sync icon on any existing pinned shortcut immediately
         runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
-        // Only request the user to pin if no pinned shortcut exists yet for this id
-        val isAlreadyPinned = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1 && runCatching {
-            app.getSystemService(ShortcutManager::class.java)
-                ?.pinnedShortcuts?.any { it.id == id } ?: false
-        }.getOrElse { false }
-        if (!isAlreadyPinned) addPinShortcut(icon, id, label, intent)
+        addPinShortcut(icon, id, label, intent)
     }
 
     private fun addPinShortcut(icon: IconCompat, id: String, label: CharSequence, intent: Intent) {
