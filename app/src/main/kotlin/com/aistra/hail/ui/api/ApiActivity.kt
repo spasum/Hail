@@ -79,20 +79,22 @@ class ApiActivity : ComponentActivity() {
     /**
      * Handle schema actions
      *
-     * hail://launch?package=xxx
-     * hail://freeze?package=xxx
-     * hail://unfreeze?package=xxx
-     * hail://freeze_tag?tag=xxx
-     * hail://unfreeze_tag?tag=xxx
-     * hail://freeze_all
-     * hail://unfreeze_all
-     * hail://freeze_non_whitelisted
-     * hail://freeze_auto
-     * hail://lock
-     * hail://lock_freeze
+     * shizufreeze://launch?package=xxx
+     * shizufreeze://freeze?package=xxx
+     * shizufreeze://unfreeze?package=xxx
+     * shizufreeze://freeze_tag?tag=xxx
+     * shizufreeze://unfreeze_tag?tag=xxx
+     * shizufreeze://freeze_all
+     * shizufreeze://unfreeze_all
+     * shizufreeze://freeze_non_whitelisted
+     * shizufreeze://freeze_auto
+     * shizufreeze://lock
+     * shizufreeze://lock_freeze
      */
     private fun handleSchema(uri: Uri?): Boolean {
-        if (uri?.scheme != "hail") throw IllegalArgumentException("Unknown scheme:\n${uri?.scheme}")
+        // Manifest declares only "shizufreeze"; keep "hail" for any legacy pinned shortcuts.
+        if (uri?.scheme != "shizufreeze" && uri?.scheme != "hail")
+            throw IllegalArgumentException("Unknown scheme:\n${uri?.scheme}")
         return handleAction(
             when (uri.host) {
                 "launch" -> HailApi.ACTION_LAUNCH

@@ -33,8 +33,6 @@ import io.spasum.hailshizuku.HailApp.Companion.app
 import io.spasum.hailshizuku.R
 import io.spasum.hailshizuku.app.AppInfo
 import io.spasum.hailshizuku.app.AppManager
-import io.spasum.hailshizuku.app.HailApi
-import io.spasum.hailshizuku.app.HailApi.addTag
 import io.spasum.hailshizuku.app.HailData
 import io.spasum.hailshizuku.databinding.DialogInputBinding
 import io.spasum.hailshizuku.databinding.FragmentPagerBinding
@@ -226,7 +224,7 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
                             info,
                             pkg,
                             info.name,
-                            HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, pkg).addTag(HailData.tags[index].first)
+                            HShortcuts.buildLaunchIntent(pkg, HailData.tags[index].first)
                         )
                     }.setPositiveButton(R.string.action_skip) { _, _ ->
                         HShortcuts.addPinShortcutForApp(pkg)

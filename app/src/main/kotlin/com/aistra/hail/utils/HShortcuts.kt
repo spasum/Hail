@@ -9,6 +9,7 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 object HShortcuts {
     private const val API_ACTIVITY_CLASS = "io.spasum.hailshizuku.ui.api.ApiActivity"
+    private const val URI_SCHEME = "shizufreeze"
 
     private val iconLoader by lazy {
         AppIconLoader(
@@ -62,6 +64,28 @@ object HShortcuts {
     private fun shortcutIdFor(packageName: String): String = packageName.hashCode().toString()
 
     /**
+     * Build the launch intent that will be wrapped in a shortcut. We use `ACTION_VIEW` + a data URI
+     * (`shizufreeze://launch?package=…`) rather than a custom action with extras. This is the form
+     * that picky OEM launchers (Vivo / OriginOS, MIUI / HyperOS, ColorOS, etc.) accept for pinned
+     * shortcuts — custom actions with extras often trigger a generic "Ошибка добавления" toast.
+     *
+     * An explicit component is set so the intent resolves without relying on intent-filter
+     * matching, and `FLAG_ACTIVITY_NEW_TASK` is required for activities started from the launcher.
+     */
+    fun buildLaunchIntent(packageName: String, tag: String? = null): Intent {
+        val builder = Uri.Builder()
+            .scheme(URI_SCHEME).authority("launch")
+            .appendQueryParameter(HailData.KEY_PACKAGE, packageName)
+        if (tag != null) builder.appendQueryParameter(HailData.KEY_TAG, tag)
+        return Intent(Intent.ACTION_VIEW, builder.build()).apply {
+            component = ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS)
+            setPackage(BuildConfig.APPLICATION_ID)
+            addCategory(Intent.CATEGORY_DEFAULT)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+    }
+
+    /**
      * Build a [ShortcutInfoCompat] that reflects the current frozen/unfrozen state of [packageName].
      * Icon is greyscaled when the app is frozen and coloured when it is not, mirroring IceBox.
      */
@@ -77,17 +101,10 @@ object HShortcuts {
             }
         }
         val label = appInfo?.loadLabel(app.packageManager) ?: packageName
-        // Explicit component + package: picky launchers (MIUI/HyperOS) reject action-only intents
-        // with "Ошибка добавления" otherwise.
-        val intent = Intent(HailApi.ACTION_LAUNCH).apply {
-            component = ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS)
-            setPackage(BuildConfig.APPLICATION_ID)
-            putExtra(HailData.KEY_PACKAGE, packageName)
-        }
         return ShortcutInfoCompat.Builder(app, shortcutIdFor(packageName))
             .setIcon(IconCompat.createWithBitmap(bmp))
             .setShortLabel(label)
-            .setIntent(intent)
+            .setIntent(buildLaunchIntent(packageName))
             .build()
     }
 
@@ -104,7 +121,7 @@ object HShortcuts {
     }
 
     fun addPinShortcut(icon: Drawable, id: String, label: CharSequence, intent: Intent) {
-        addPinShortcut(getDrawableIcon(icon), id, label, intent)
+        addPinShortcut(getDrawableIcon(icon), id, label, normalizeLauncherIntent(intent))
     }
 
     fun addPinShortcut(appInfo: AppInfo, id: String, label: CharSequence, intent: Intent) {
@@ -116,13 +133,12 @@ object HShortcuts {
         }.getOrElse {
             getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
         }
-        addPinShortcut(IconCompat.createWithBitmap(bmp), id, label, intent)
+        addPinShortcut(IconCompat.createWithBitmap(bmp), id, label, normalizeLauncherIntent(intent))
     }
 
     /**
      * Explicit user-initiated pin: register as dynamic so later updates land, then ask the launcher
-     * to pin it to the home screen. Failures are swallowed — launchers (e.g. MIUI without the
-     * "Create shortcuts" permission) show their own toast that we cannot suppress.
+     * to pin it to the home screen.
      */
     fun addPinShortcutForApp(packageName: String) {
         val shortcut = buildAppShortcut(packageName)
@@ -163,7 +179,6 @@ object HShortcuts {
      */
     fun updateShortcutIcon(packageName: String, frozen: Boolean) {
         val shortcut = buildAppShortcut(packageName)
-        // updateShortcuts targets existing dynamic OR pinned shortcuts that share the id.
         runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
             .onFailure { HLog.e(it) }
         val isDynamic = runCatching {
@@ -200,6 +215,8 @@ object HShortcuts {
         ).setShortLabel(app.getString(label)).setIntent(Intent(id).apply {
             component = ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS)
             setPackage(BuildConfig.APPLICATION_ID)
+            addCategory(Intent.CATEGORY_DEFAULT)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }).build()
         runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
             .onFailure { HLog.e(it) }
@@ -207,6 +224,20 @@ object HShortcuts {
 
     fun removeAllDynamicShortcuts() {
         ShortcutManagerCompat.removeAllDynamicShortcuts(app)
+    }
+
+    /**
+     * Ensure any launcher-facing intent has an explicit component, category, and the activity
+     * flags that launchers require. Used for ad-hoc pin intents coming from the Settings screen
+     * (freeze-all / unfreeze-all / lock actions).
+     */
+    private fun normalizeLauncherIntent(src: Intent): Intent = Intent(src).apply {
+        if (component == null) {
+            component = ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS)
+        }
+        if (`package` == null) setPackage(BuildConfig.APPLICATION_ID)
+        addCategory(Intent.CATEGORY_DEFAULT)
+        flags = flags or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
     }
 
     private fun toGreyscale(bitmap: Bitmap): Bitmap {
