@@ -98,7 +98,14 @@ object HShortcuts {
             .setShortLabel(appInfo?.loadLabel(app.packageManager) ?: packageName)
             .setIntent(HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName))
             .build()
-        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
+        val isDynamic = runCatching {
+            ShortcutManagerCompat.getDynamicShortcuts(app).any { it.id == id }
+        }.getOrElse { false }
+        if (isDynamic) {
+            runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
+        } else {
+            runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
+        }
     }
 
     fun addDynamicShortcutAction(action: String) {
