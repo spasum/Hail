@@ -101,7 +101,9 @@ object HShortcuts {
             }
         }.getOrElse {
             HLog.e(it)
-            return
+            getBitmapFromDrawable(app.packageManager.defaultActivityIcon).let { fallback ->
+                if (frozen) toGreyscale(fallback) else fallback
+            }
         }
         val shortcut = ShortcutInfoCompat.Builder(app, id)
             .setIcon(IconCompat.createWithBitmap(bmp))
