@@ -34,8 +34,7 @@ object HShortcuts {
 
     fun addPinShortcut(appInfo: AppInfo, id: String, label: CharSequence, intent: Intent) {
         appInfo.applicationInfo?.let {
-            var bmp = IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
-            if (AppManager.isAppFrozen(appInfo.packageName)) bmp = toGreyscale(bmp)
+            val bmp = IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
             addPinShortcut(IconCompat.createWithBitmap(bmp), id, label, intent)
         } ?: run {
             addPinShortcut(app.packageManager.defaultActivityIcon, id, label, intent)
@@ -86,7 +85,6 @@ object HShortcuts {
 
     fun updateShortcutIcon(packageName: String, frozen: Boolean) {
         val id = packageName.hashCode().toString()
-        if (ShortcutManagerCompat.getDynamicShortcuts(app).none { it.id == id }) return
         val appInfo = HPackages.getApplicationInfoOrNull(packageName) ?: return
         var bmp = IconPack.loadIcon(appInfo.packageName) ?: iconLoader.loadIcon(appInfo)
         if (frozen) bmp = toGreyscale(bmp)
