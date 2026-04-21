@@ -3,6 +3,9 @@ package io.spasum.hailshizuku.utils
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -11,6 +14,7 @@ import androidx.core.graphics.drawable.IconCompat
 import io.spasum.hailshizuku.HailApp.Companion.app
 import io.spasum.hailshizuku.R
 import io.spasum.hailshizuku.app.AppInfo
+import io.spasum.hailshizuku.app.AppManager
 import io.spasum.hailshizuku.app.HailApi
 import io.spasum.hailshizuku.app.HailData
 import me.zhanghai.android.appiconloader.AppIconLoader
@@ -30,11 +34,24 @@ object HShortcuts {
 
     fun addPinShortcut(appInfo: AppInfo, id: String, label: CharSequence, intent: Intent) {
         appInfo.applicationInfo?.let {
-            val icon = IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
-            addPinShortcut(IconCompat.createWithBitmap(icon), id, label, intent)
+            var bmp = IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
+            if (AppManager.isAppFrozen(appInfo.packageName)) bmp = toGreyscale(bmp)
+            addPinShortcut(IconCompat.createWithBitmap(bmp), id, label, intent)
         } ?: run {
             addPinShortcut(app.packageManager.defaultActivityIcon, id, label, intent)
         }
+    }
+
+    fun addPinShortcutForApp(packageName: String) {
+        val appInfo = HPackages.getApplicationInfoOrNull(packageName) ?: return
+        var bmp = IconPack.loadIcon(packageName) ?: iconLoader.loadIcon(appInfo)
+        if (AppManager.isAppFrozen(packageName)) bmp = toGreyscale(bmp)
+        addPinShortcut(
+            IconCompat.createWithBitmap(bmp),
+            packageName,
+            appInfo.loadLabel(app.packageManager),
+            HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName)
+        )
     }
 
     private fun addPinShortcut(icon: IconCompat, id: String, label: CharSequence, intent: Intent) {
@@ -51,17 +68,32 @@ object HShortcuts {
     fun addDynamicShortcut(packageName: String) {
         if (HailData.biometricLogin) return
         val applicationInfo = HPackages.getApplicationInfoOrNull(packageName)
+        var bmp = applicationInfo?.let {
+            IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
+        } ?: getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
+        if (AppManager.isAppFrozen(packageName)) bmp = toGreyscale(bmp)
         val shortcut =
-            ShortcutInfoCompat.Builder(app, packageName.hashCode().toString()) // Make id different from pin
-                .setIcon(IconCompat.createWithBitmap(applicationInfo?.let {
-                    IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
-                } ?: getBitmapFromDrawable(
-                    app.packageManager.defaultActivityIcon
-                ))).setShortLabel(
-                    applicationInfo?.loadLabel(app.packageManager) ?: packageName
-                ).setIntent(HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName)).build()
+            ShortcutInfoCompat.Builder(app, packageName.hashCode().toString())
+                .setIcon(IconCompat.createWithBitmap(bmp))
+                .setShortLabel(applicationInfo?.loadLabel(app.packageManager) ?: packageName)
+                .setIntent(HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName))
+                .build()
         ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
         addDynamicShortcutAction(HailData.dynamicShortcutAction)
+    }
+
+    fun updateShortcutIcon(packageName: String, frozen: Boolean) {
+        val id = packageName.hashCode().toString()
+        if (ShortcutManagerCompat.getDynamicShortcuts(app).none { it.id == id }) return
+        val appInfo = HPackages.getApplicationInfoOrNull(packageName) ?: return
+        var bmp = IconPack.loadIcon(appInfo.packageName) ?: iconLoader.loadIcon(appInfo)
+        if (frozen) bmp = toGreyscale(bmp)
+        val shortcut = ShortcutInfoCompat.Builder(app, id)
+            .setIcon(IconCompat.createWithBitmap(bmp))
+            .setShortLabel(appInfo.loadLabel(app.packageManager))
+            .setIntent(HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName))
+            .build()
+        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
     }
 
     fun addDynamicShortcutAction(action: String) {
@@ -86,17 +118,23 @@ object HShortcuts {
             else -> R.string.action_unfreeze_all
         }
         val shortcut = ShortcutInfoCompat.Builder(app, id).setIcon(
-            getDrawableIcon(
-                AppCompatResources.getDrawable(
-                    app, icon
-                )!!
-            )
+            getDrawableIcon(AppCompatResources.getDrawable(app, icon)!!)
         ).setShortLabel(app.getString(label)).setIntent(Intent(id)).build()
         ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
     }
 
     fun removeAllDynamicShortcuts() {
         ShortcutManagerCompat.removeAllDynamicShortcuts(app)
+    }
+
+    private fun toGreyscale(bitmap: Bitmap): Bitmap {
+        val result = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(result)
+        val paint = Paint().apply {
+            colorFilter = ColorMatrixColorFilter(ColorMatrix().also { it.setSaturation(0f) })
+        }
+        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+        return result
     }
 
     private fun getDrawableIcon(drawable: Drawable): IconCompat =

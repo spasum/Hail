@@ -3,6 +3,7 @@ package io.spasum.hailshizuku.app
 import android.content.Intent
 import io.spasum.hailshizuku.BuildConfig
 import io.spasum.hailshizuku.utils.*
+import io.spasum.hailshizuku.utils.HShortcuts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -40,15 +41,17 @@ object AppManager {
         return if (denied && names.isEmpty()) null else names.joinToString("\n")
     }
 
-    fun setAppFrozen(packageName: String, frozen: Boolean): Boolean =
-        packageName != BuildConfig.APPLICATION_ID && when (HailData.workingMode) {
-
+    fun setAppFrozen(packageName: String, frozen: Boolean): Boolean {
+        val result = packageName != BuildConfig.APPLICATION_ID && when (HailData.workingMode) {
             HailData.MODE_SHIZUKU_STOP -> !frozen || HShizuku.forceStopApp(packageName)
             HailData.MODE_SHIZUKU_DISABLE -> HShizuku.setAppDisabled(packageName, frozen)
             HailData.MODE_SHIZUKU_HIDE -> HShizuku.setAppHidden(packageName, frozen)
             HailData.MODE_SHIZUKU_SUSPEND -> HShizuku.setAppSuspended(packageName, frozen)
             else -> false
         }
+        if (result) HShortcuts.updateShortcutIcon(packageName, frozen)
+        return result
+    }
 
     fun uninstallApp(packageName: String): Boolean {
         when {

@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.view.Gravity
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.widget.ScrollView
 import android.widget.TextView
@@ -33,6 +34,8 @@ object HOverlayToast {
             val dm = app.resources.displayMetrics
             val d = dm.density
             val pad = (14 * d).toInt()
+            val maxW = (minOf(dm.widthPixels, dm.heightPixels) * 0.85f).toInt()
+            val maxH = (dm.heightPixels * 0.4f).toInt()
 
             val bg = GradientDrawable().apply {
                 setColor(0xE0212121.toInt())
@@ -47,12 +50,14 @@ object HOverlayToast {
             val sv = ScrollView(app).apply {
                 setBackground(bg)
                 addView(tv)
+                isClickable = true
+                setOnClickListener { removeCurrentView() }
             }
             currentView = sv
 
             val params = WindowManager.LayoutParams(
-                (minOf(dm.widthPixels, dm.heightPixels) * 0.85f).toInt(),
-                (dm.heightPixels * 0.4f).toInt(),
+                maxW,
+                WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT
@@ -63,6 +68,15 @@ object HOverlayToast {
 
             try {
                 wm.addView(sv, params)
+                sv.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        sv.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                        if (sv.height > maxH) {
+                            params.height = maxH
+                            runCatching { wm.updateViewLayout(sv, params) }
+                        }
+                    }
+                })
                 handler.postDelayed(dismissRunnable, 5000L)
             } catch (_: Exception) {
                 currentView = null

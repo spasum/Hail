@@ -23,6 +23,7 @@ import io.spasum.hailshizuku.extensions.*
 import io.spasum.hailshizuku.ui.main.MainFragment
 import io.spasum.hailshizuku.utils.HFiles
 import io.spasum.hailshizuku.utils.HPackages
+import io.spasum.hailshizuku.utils.HShortcuts
 import io.spasum.hailshizuku.utils.HUI
 import io.spasum.hailshizuku.views.HRecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -190,8 +191,10 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
     override fun onItemCheckedChange(
         buttonView: CompoundButton, isChecked: Boolean, packageName: String
     ) {
-        if (isChecked) HailData.addCheckedApp(packageName)
-        else HailData.removeCheckedApp(packageName)
+        if (isChecked) {
+            HailData.addCheckedApp(packageName)
+            HShortcuts.addPinShortcutForApp(packageName)
+        } else HailData.removeCheckedApp(packageName)
         buttonView.isChecked = HailData.isChecked(packageName)
     }
 
