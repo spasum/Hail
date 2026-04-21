@@ -34,7 +34,8 @@ object HShortcuts {
     }
 
     fun addPinShortcut(appInfo: AppInfo, id: String, label: CharSequence, intent: Intent) {
-        appInfo.applicationInfo?.let {
+        val applicationInfo = appInfo.applicationInfo ?: getApplicationInfoForShortcut(appInfo.packageName)
+        applicationInfo?.let {
             var bmp = IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
             if (AppManager.isAppFrozen(appInfo.packageName)) bmp = toGreyscale(bmp)
             addPinShortcut(IconCompat.createWithBitmap(bmp), id, label, intent)
@@ -44,17 +45,21 @@ object HShortcuts {
     }
 
     fun addPinShortcutForApp(packageName: String) {
-        val appInfo = HPackages.getApplicationInfoOrNull(packageName) ?: return
-        var bmp = IconPack.loadIcon(packageName) ?: iconLoader.loadIcon(appInfo)
-        if (AppManager.isAppFrozen(packageName)) bmp = toGreyscale(bmp)
+        val appInfo = getApplicationInfoForShortcut(packageName) ?: return
+        val bmp = runCatching {
+            (IconPack.loadIcon(appInfo.packageName) ?: iconLoader.loadIcon(appInfo)).let {
+                if (AppManager.isAppFrozen(packageName)) toGreyscale(it) else it
+            }
+        }.getOrElse { getBitmapFromDrawable(app.packageManager.defaultActivityIcon) }
         val icon = IconCompat.createWithBitmap(bmp)
         val label = appInfo.loadLabel(app.packageManager)
         val id = packageName.hashCode().toString()
         val intent = HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName)
         val shortcut = ShortcutInfoCompat.Builder(app, id).setIcon(icon).setShortLabel(label).setIntent(intent).build()
-        // Only show "Add to home screen" dialog on first add; subsequent calls just update the icon
-        val isNew = ShortcutManagerCompat.getDynamicShortcuts(app).none { it.id == id }
-        ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
+        val isNew = runCatching {
+            ShortcutManagerCompat.getDynamicShortcuts(app).none { it.id == id }
+        }.getOrElse { true }
+        runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
         if (isNew) addPinShortcut(icon, id, label, intent)
     }
 
@@ -89,10 +94,15 @@ object HShortcuts {
     fun updateShortcutIcon(packageName: String, frozen: Boolean) {
         val id = packageName.hashCode().toString()
         val appInfo = getApplicationInfoForShortcut(packageName)
-        var bmp = appInfo?.let {
-            IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
-        } ?: getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
-        if (frozen) bmp = toGreyscale(bmp)
+        val bmp = runCatching {
+            (appInfo?.let { IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it) }
+                ?: getBitmapFromDrawable(app.packageManager.defaultActivityIcon)).let {
+                if (frozen) toGreyscale(it) else it
+            }
+        }.getOrElse {
+            HLog.e(it)
+            return
+        }
         val shortcut = ShortcutInfoCompat.Builder(app, id)
             .setIcon(IconCompat.createWithBitmap(bmp))
             .setShortLabel(appInfo?.loadLabel(app.packageManager) ?: packageName)
@@ -103,9 +113,9 @@ object HShortcuts {
         }.getOrElse { false }
         if (isDynamic) {
             runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
-        } else {
-            runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
         }
+        // Always update pinned shortcuts on the home screen
+        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
     }
 
     fun addDynamicShortcutAction(action: String) {
@@ -156,12 +166,15 @@ object HShortcuts {
         HPackages.getApplicationInfoOrNull(packageName)
             ?: HPackages.getUnhiddenPackageInfoOrNull(packageName)?.applicationInfo
 
-    private fun getBitmapFromDrawable(drawable: Drawable): Bitmap = Bitmap.createBitmap(
-        drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888
-    ).also {
-        with(Canvas(it)) {
-            drawable.setBounds(0, 0, width, height)
-            drawable.draw(this)
+    private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
+        val defaultSize = app.resources.getDimensionPixelSize(R.dimen.app_icon_size)
+        val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: defaultSize
+        val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: defaultSize
+        return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also {
+            with(Canvas(it)) {
+                drawable.setBounds(0, 0, width, height)
+                drawable.draw(this)
+            }
         }
     }
 }

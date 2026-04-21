@@ -178,7 +178,9 @@ class ApiActivity : ComponentActivity() {
                 else "android.intent.extra.PACKAGE_NAME"
             )
         }?.also {
-            HPackages.getApplicationInfoOrNull(it) ?: throw NameNotFoundException(getString(R.string.app_not_installed))
+            HPackages.getApplicationInfoOrNull(it)
+                ?: HPackages.getUnhiddenPackageInfoOrNull(it)?.applicationInfo
+                ?: throw NameNotFoundException(getString(R.string.app_not_installed))
         } ?: throw IllegalArgumentException("Package must not be null")
 
     private val requireTagId: Int
