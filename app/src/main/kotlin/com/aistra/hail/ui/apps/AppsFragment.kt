@@ -193,7 +193,10 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
     ) {
         if (isChecked) {
             HailData.addCheckedApp(packageName)
-            HShortcuts.addPinShortcutForApp(packageName)
+            // Register a dynamic shortcut only (no pin dialog) so we don't spam
+            // "Ошибка добавления" on launchers that rate-limit/require extra permissions.
+            // The user can still pin explicitly from the Home tab's long-press menu.
+            HShortcuts.registerAppShortcut(packageName)
         } else HailData.removeCheckedApp(packageName)
         buttonView.isChecked = HailData.isChecked(packageName)
     }
