@@ -42,6 +42,9 @@ object AppManager {
     }
 
     fun setAppFrozen(packageName: String, frozen: Boolean): Boolean {
+        // Pre-cache the app icon before hiding/disabling so we still have it available for
+        // shortcut updates after the package becomes invisible to PackageManager.
+        if (frozen) HShortcuts.precacheAppIcon(packageName)
         val result = packageName != BuildConfig.APPLICATION_ID && when (HailData.workingMode) {
             HailData.MODE_SHIZUKU_STOP -> !frozen || HShizuku.forceStopApp(packageName)
             HailData.MODE_SHIZUKU_DISABLE -> HShizuku.setAppDisabled(packageName, frozen)
