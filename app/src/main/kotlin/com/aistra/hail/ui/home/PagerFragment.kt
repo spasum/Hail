@@ -436,8 +436,8 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
             null -> HUI.showToast(R.string.permission_denied)
             else -> {
                 if (updateList) updateCurrentList()
-                HUI.showToast(
-                    if (frozen) R.string.msg_freeze else R.string.msg_unfreeze, result
+                HOverlayToast.show(
+                    getString(if (frozen) R.string.msg_freeze else R.string.msg_unfreeze, result)
                 )
             }
         }

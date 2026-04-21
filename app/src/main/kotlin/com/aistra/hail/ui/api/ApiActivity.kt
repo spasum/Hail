@@ -31,6 +31,7 @@ import io.spasum.hailshizuku.app.AppManager
 import io.spasum.hailshizuku.app.HailApi
 import io.spasum.hailshizuku.app.HailData
 import io.spasum.hailshizuku.ui.theme.AppTheme
+import io.spasum.hailshizuku.utils.HOverlayToast
 import io.spasum.hailshizuku.utils.HPackages
 import io.spasum.hailshizuku.utils.HShortcuts
 import io.spasum.hailshizuku.utils.HTarget
@@ -207,9 +208,9 @@ class ApiActivity : ComponentActivity() {
         ) -> throw IllegalStateException(getString(R.string.permission_denied))
 
         else -> {
-            HUI.showToast(
-                if (frozen) R.string.msg_freeze else R.string.msg_unfreeze,
-                HPackages.getApplicationInfoOrNull(pkg)?.loadLabel(packageManager) ?: pkg
+            HOverlayToast.show(
+                getString(if (frozen) R.string.msg_freeze else R.string.msg_unfreeze,
+                    HPackages.getApplicationInfoOrNull(pkg)?.loadLabel(packageManager) ?: pkg)
             )
             app.setAutoFreezeService()
         }
@@ -223,8 +224,8 @@ class ApiActivity : ComponentActivity() {
         when (val result = AppManager.setListFrozen(frozen, *filtered.toTypedArray())) {
             null -> throw IllegalStateException(getString(R.string.permission_denied))
             else -> {
-                HUI.showToast(
-                    if (frozen) R.string.msg_freeze else R.string.msg_unfreeze, result
+                HOverlayToast.show(
+                    getString(if (frozen) R.string.msg_freeze else R.string.msg_unfreeze, result)
                 )
                 app.setAutoFreezeService()
             }

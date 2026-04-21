@@ -84,6 +84,9 @@
     <string name="grayscale_icon">Иконки в градациях серого</string>
     <string name="compact_icon">Компактные иконки</string>
     <string name="hail_compat">Режим совместимости с Hail</string>
+    <string name="overlay_permission">Разрешение на всплывающие уведомления</string>
+    <string name="overlay_permission_summary">Нажмите для выдачи — нужно для длинных уведомлений о заморозке</string>
+    <string name="overlay_permission_granted">Выдано ✓</string>
     <string name="action_biometric">Биометрический вход</string>
     <string name="msg_biometric">Вход с использованием своих биометрических данных</string>
     <string name="action_pin">Закрепить</string>

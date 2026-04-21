@@ -34,6 +34,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import io.spasum.hailshizuku.HailApp.Companion.app
 import io.spasum.hailshizuku.ui.api.HailCompatibilityActivity
+import io.spasum.hailshizuku.utils.HOverlayToast
 import io.spasum.hailshizuku.R
 import io.spasum.hailshizuku.app.AppManager
 import io.spasum.hailshizuku.app.HailApi
@@ -83,6 +84,27 @@ class SettingsFragment : MainFragment(), MenuProvider {
                 icon = Icons.Outlined.Adb,
                 type = ListPreferenceType.ALERT_DIALOG
             )
+            item(key = "overlay_permission", contentType = "Preference") {
+                val canDraw = HOverlayToast.canDraw()
+                Preference(
+                    onClick = {
+                        startActivity(
+                            android.content.Intent(
+                                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                android.net.Uri.parse("package:${requireContext().packageName}")
+                            )
+                        )
+                    },
+                    title = { Text(stringResource(R.string.overlay_permission)) },
+                    summary = {
+                        Text(
+                            if (canDraw) stringResource(R.string.overlay_permission_granted)
+                            else stringResource(R.string.overlay_permission_summary)
+                        )
+                    },
+                    icon = { Icon(Icons.Outlined.Layers, contentDescription = null) }
+                )
+            }
             switchPreference(
                 key = HailData.HAIL_COMPAT,
                 defaultValue = true,
