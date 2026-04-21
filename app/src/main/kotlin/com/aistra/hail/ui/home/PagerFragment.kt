@@ -229,13 +229,9 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
                             HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, pkg).addTag(HailData.tags[index].first)
                         )
                     }.setPositiveButton(R.string.action_skip) { _, _ ->
-                        HShortcuts.addPinShortcut(
-                            info, pkg, info.name, HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, pkg)
-                        )
+                        HShortcuts.addPinShortcutForApp(pkg)
                     }.setNegativeButton(android.R.string.cancel, null).show()
-                else HShortcuts.addPinShortcut(
-                    info, pkg, info.name, HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, pkg)
-                )
+                else HShortcuts.addPinShortcutForApp(pkg)
 
                 7 -> exportToClipboard(listOf(info))
                 8 -> removeCheckedApp(pkg)
