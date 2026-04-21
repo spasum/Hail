@@ -71,6 +71,27 @@
             </intent-filter>
         </activity>
 
+        <activity
+                android:name=".ui.api.HailCompatibilityActivity"
+                android:exported="true"
+                android:launchMode="singleInstance"
+                android:theme="@style/Theme.Hail.Translucent">
+            <intent-filter>
+                <action android:name="com.aistra.hail.action.LAUNCH"/>
+                <action android:name="com.aistra.hail.action.FREEZE"/>
+                <action android:name="com.aistra.hail.action.UNFREEZE"/>
+                <action android:name="com.aistra.hail.action.FREEZE_TAG"/>
+                <action android:name="com.aistra.hail.action.UNFREEZE_TAG"/>
+                <action android:name="com.aistra.hail.action.FREEZE_ALL"/>
+                <action android:name="com.aistra.hail.action.UNFREEZE_ALL"/>
+                <action android:name="com.aistra.hail.action.FREEZE_NON_WHITELISTED"/>
+                <action android:name="com.aistra.hail.action.FREEZE_AUTO"/>
+                <action android:name="com.aistra.hail.action.LOCK"/>
+                <action android:name="com.aistra.hail.action.LOCK_FREEZE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
         <provider
                 android:name="rikka.shizuku.ShizukuProvider"
                 android:authorities="${applicationId}.shizuku"

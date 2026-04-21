@@ -45,6 +45,7 @@ object HailData {
         MODE_SHIZUKU_HIDE,
         MODE_SHIZUKU_SUSPEND
     )
+    const val HAIL_COMPAT = "hail_compat"
     const val BIOMETRIC_LOGIN = "biometric_login"
     const val APP_THEME = "app_theme"
     const val FOLLOW_SYSTEM = "follow_system"

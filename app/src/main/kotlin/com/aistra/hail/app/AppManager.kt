@@ -25,26 +25,19 @@ object AppManager {
 
     fun setListFrozen(frozen: Boolean, vararg appInfo: AppInfo): String? {
         val excludeMe = appInfo.filter { it.packageName != BuildConfig.APPLICATION_ID }
-        var i = 0
+        val names = mutableListOf<String>()
         var denied = false
-        var name = String()
         when (HailData.workingMode) {
-            // call setListFrozen for some batch-style working mode here
-            // fallback to setAppFrozen otherwise
             else -> {
                 excludeMe.forEach {
                     when {
-                        setAppFrozen(it.packageName, frozen) -> {
-                            i++
-                            name = it.name.toString()
-                        }
-
+                        setAppFrozen(it.packageName, frozen) -> names.add(it.name.toString())
                         it.applicationInfo != null -> denied = true
                     }
                 }
             }
         }
-        return if (denied && i == 0) null else if (i == 1) name else i.toString()
+        return if (denied && names.isEmpty()) null else names.joinToString("\n")
     }
 
     fun setAppFrozen(packageName: String, frozen: Boolean): Boolean =

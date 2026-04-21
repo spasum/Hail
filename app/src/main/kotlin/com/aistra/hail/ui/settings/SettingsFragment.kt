@@ -1,5 +1,6 @@
 package io.spasum.hailshizuku.ui.settings
 
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -32,6 +33,7 @@ import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import io.spasum.hailshizuku.HailApp.Companion.app
+import io.spasum.hailshizuku.ui.api.HailCompatibilityActivity
 import io.spasum.hailshizuku.R
 import io.spasum.hailshizuku.app.AppManager
 import io.spasum.hailshizuku.app.HailApi
@@ -80,6 +82,22 @@ class SettingsFragment : MainFragment(), MenuProvider {
                 titleId = R.string.working_mode,
                 icon = Icons.Outlined.Adb,
                 type = ListPreferenceType.ALERT_DIALOG
+            )
+            switchPreference(
+                key = HailData.HAIL_COMPAT,
+                defaultValue = true,
+                onValueChange = { state, value ->
+                    app.packageManager.setComponentEnabledSetting(
+                        ComponentName(app, HailCompatibilityActivity::class.java),
+                        if (value) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                        else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                    state.value = value
+                    true
+                },
+                titleId = R.string.hail_compat,
+                icon = Icons.Outlined.SyncAlt
             )
             switchPreference(
                 key = HailData.BIOMETRIC_LOGIN,

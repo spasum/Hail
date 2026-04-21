@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ShizuFreeze</string>
+    <string name="app_name">Freeze</string>
     <string name="app_slogan">Freezedom!</string>
     <string name="title_home">Home</string>
     <string name="title_apps">Apps</string>
@@ -84,6 +84,7 @@
     <string name="title_customize">Customize</string>
     <string name="grayscale_icon">Grayscale icon</string>
     <string name="compact_icon">Compact icon</string>
+    <string name="hail_compat">Hail compatibility mode</string>
     <string name="action_biometric">Biometric login</string>
     <string name="msg_biometric">Login using your biometric credential</string>
     <string name="action_pin">Pin</string>

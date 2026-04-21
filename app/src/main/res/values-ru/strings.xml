@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ShizuFreeze</string>
+    <string name="app_name">Freeze</string>
     <string name="app_slogan">Freezedom!</string>
     <string name="title_home">Главная</string>
     <string name="title_apps">Приложения</string>
@@ -83,6 +83,7 @@
     <string name="title_customize">Внешний вид</string>
     <string name="grayscale_icon">Иконки в градациях серого</string>
     <string name="compact_icon">Компактные иконки</string>
+    <string name="hail_compat">Режим совместимости с Hail</string>
     <string name="action_biometric">Биометрический вход</string>
     <string name="msg_biometric">Вход с использованием своих биометрических данных</string>
     <string name="action_pin">Закрепить</string>
