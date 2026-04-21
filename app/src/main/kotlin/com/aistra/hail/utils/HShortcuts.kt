@@ -26,6 +26,12 @@ import java.util.concurrent.ConcurrentHashMap
 object HShortcuts {
     private const val API_ACTIVITY_CLASS = "io.spasum.hailshizuku.ui.api.ApiActivity"
 
+    /** Used as the shortcut's owning activity. Must be the LAUNCHER activity — OEM launchers
+     *  (Vivo/BBK/OriginOS) reject shortcuts bound to activities with excludeFromRecents=true or
+     *  singleInstance launch mode, which ApiActivity has. The shortcut *intent* still targets
+     *  ApiActivity explicitly; this only affects launcher grouping / validation. */
+    private const val MAIN_ACTIVITY_CLASS = "io.spasum.hailshizuku.ui.main.MainActivity"
+
     private val iconLoader by lazy {
         AppIconLoader(
             app.resources.getDimensionPixelSize(R.dimen.app_icon_size),
@@ -82,6 +88,9 @@ object HShortcuts {
      * matching. CATEGORY_DEFAULT is intentionally omitted — it is unnecessary for explicit-
      * component intents and Vivo/OriginOS launchers reject shortcut intents that carry non-
      * standard categories during their pin-time validation step.
+     *
+     * FLAG_ACTIVITY_CLEAR_TASK is intentionally omitted — for singleInstance activities it can
+     * cause Vivo launcher validation to fail; FLAG_ACTIVITY_NEW_TASK alone is sufficient.
      */
     fun buildLaunchIntent(packageName: String, tag: String? = null): Intent =
         Intent(HailApi.ACTION_LAUNCH).apply {
@@ -89,7 +98,7 @@ object HShortcuts {
             setPackage(BuildConfig.APPLICATION_ID)
             putExtra(HailData.KEY_PACKAGE, packageName)
             if (tag != null) putExtra(HailData.KEY_TAG, tag)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
 
     /**
@@ -119,7 +128,7 @@ object HShortcuts {
             .setIcon(IconCompat.createWithAdaptiveBitmap(bmp))
             .setShortLabel(truncateShortLabel(label))
             .setLongLabel(label)
-            .setActivity(ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS))
+            .setActivity(ComponentName(BuildConfig.APPLICATION_ID, MAIN_ACTIVITY_CLASS))
             .setLongLived(true)
             .setIntent(buildLaunchIntent(packageName))
             .build()
@@ -170,7 +179,7 @@ object HShortcuts {
             .setIcon(icon)
             .setShortLabel(label)
             .setLongLabel(label)
-            .setActivity(ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS))
+            .setActivity(ComponentName(BuildConfig.APPLICATION_ID, MAIN_ACTIVITY_CLASS))
             .setLongLived(true)
             .setIntent(intent)
             .build()
