@@ -49,12 +49,11 @@ object HShortcuts {
         val label = appInfo.loadLabel(app.packageManager)
         val id = packageName.hashCode().toString()
         val intent = HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName)
-        // Push as dynamic shortcut first so updateShortcutIcon can find and update it later
-        ShortcutManagerCompat.pushDynamicShortcut(
-            app,
-            ShortcutInfoCompat.Builder(app, id).setIcon(icon).setShortLabel(label).setIntent(intent).build()
-        )
-        addPinShortcut(icon, id, label, intent)
+        val shortcut = ShortcutInfoCompat.Builder(app, id).setIcon(icon).setShortLabel(label).setIntent(intent).build()
+        // Only show "Add to home screen" dialog on first add; subsequent calls just update the icon
+        val isNew = ShortcutManagerCompat.getDynamicShortcuts(app).none { it.id == id }
+        ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
+        if (isNew) addPinShortcut(icon, id, label, intent)
     }
 
     private fun addPinShortcut(icon: IconCompat, id: String, label: CharSequence, intent: Intent) {
