@@ -3,9 +3,16 @@
           xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission
-            android:name="com.android.launcher.permission.INSTALL_SHORTCUT"
-            android:maxSdkVersion="25"/>
+    <!--
+        Shortcut permissions. The AOSP INSTALL_SHORTCUT permission is a legacy one that modern
+        Android no longer enforces for `requestPinShortcut`, but several OEM launchers (Vivo / BBK,
+        HyperOS, etc.) still gate shortcut creation behind these per-vendor permissions. Declaring
+        them is harmless on devices that don't require them.
+    -->
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.bbk.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.vivo.launcher.permission.ADD_SHORTCUT"/>
     <!--    <uses-permission android:name="android.permission.INTERNET"/>-->
     <uses-permission
             android:name="android.permission.QUERY_ALL_PACKAGES"
