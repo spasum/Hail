@@ -10,7 +10,6 @@ import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.os.Build
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -89,6 +88,12 @@ object HShortcuts {
     /**
      * Build a [ShortcutInfoCompat] that reflects the current frozen/unfrozen state of [packageName].
      * Icon is greyscaled when the app is frozen and coloured when it is not, mirroring IceBox.
+     *
+     * The icon is wrapped via [IconCompat.createWithAdaptiveBitmap] because strict OEM launchers
+     * (OriginOS 5 on Vivo, HyperOS) reject legacy-style bitmap icons with their own "add failed"
+     * toast when presented in the pin-shortcut dialog. [setActivity] binds the shortcut to
+     * [ApiActivity] so the launcher's intent resolution has a clear owner, and [setLongLived]
+     * tells the framework this shortcut is intended to survive beyond a single app session.
      */
     private fun buildAppShortcut(packageName: String): ShortcutInfoCompat {
         val appInfo = getApplicationInfoForShortcut(packageName)
@@ -103,8 +108,11 @@ object HShortcuts {
         }
         val label = appInfo?.loadLabel(app.packageManager) ?: packageName
         return ShortcutInfoCompat.Builder(app, shortcutIdFor(packageName))
-            .setIcon(IconCompat.createWithBitmap(bmp))
+            .setIcon(IconCompat.createWithAdaptiveBitmap(bmp))
             .setShortLabel(label)
+            .setLongLabel(label)
+            .setActivity(ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS))
+            .setLongLived(true)
             .setIntent(buildLaunchIntent(packageName))
             .build()
     }
@@ -134,13 +142,13 @@ object HShortcuts {
         }.getOrElse {
             getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
         }
-        addPinShortcut(IconCompat.createWithBitmap(bmp), id, label, normalizeLauncherIntent(intent))
+        addPinShortcut(IconCompat.createWithAdaptiveBitmap(bmp), id, label, normalizeLauncherIntent(intent))
     }
 
     /**
-     * Explicit user-initiated pin. Tries the modern `requestPinShortcut` API and also sends the
-     * legacy `INSTALL_SHORTCUT` broadcasts that Vivo/BBK, HyperOS and other OEM launchers still
-     * listen for. On stock Android launchers the legacy broadcasts are silently ignored.
+     * Explicit user-initiated pin invoked from the Home tab's long-press menu. Routes through
+     * [requestPinShortcutAllLaunchers] which uses the modern API with a legacy-broadcast fallback
+     * for OEM launchers (Vivo/BBK, etc.) that reject the modern flow.
      */
     fun addPinShortcutForApp(packageName: String) {
         val shortcut = buildAppShortcut(packageName)
@@ -152,20 +160,25 @@ object HShortcuts {
     }
 
     private fun addPinShortcut(icon: IconCompat, id: String, label: CharSequence, intent: Intent) {
-        val shortcut = ShortcutInfoCompat.Builder(app, id).setIcon(icon).setShortLabel(label)
-            .setIntent(intent).build()
+        val shortcut = ShortcutInfoCompat.Builder(app, id)
+            .setIcon(icon)
+            .setShortLabel(label)
+            .setLongLabel(label)
+            .setActivity(ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS))
+            .setLongLived(true)
+            .setIntent(intent)
+            .build()
         val bmp = bitmapFromIconCompat(icon) ?: getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
         requestPinShortcutAllLaunchers(shortcut, label, bmp, intent)
     }
 
     /**
-     * Pin a shortcut to the home screen. We route by device brand because OEM launchers disagree
-     * on the correct API:
-     *  * Stock Android / Pixel / Samsung One UI → modern [ShortcutManagerCompat.requestPinShortcut].
-     *  * Vivo / iQOO (BBK launcher on OriginOS) → the legacy
-     *    `com.bbk.launcher.action.INSTALL_SHORTCUT` broadcast. Calling the modern API on these
-     *    devices surfaces a "Ошибка добавления" (add error) toast from the launcher.
-     * Using only one path per brand avoids duplicate pins on devices that honour both.
+     * Pin a shortcut to the home screen. Try modern [ShortcutManagerCompat.requestPinShortcut]
+     * first — it's the supported path on Android 8+ and stock launchers handle it correctly.
+     * If it returns false (e.g. OriginOS 5 / BBK launcher on Vivo, which rejects the modern flow
+     * with an "Ошибка добавления" toast), fall back to the legacy INSTALL_SHORTCUT broadcast
+     * targeted explicitly at the resolved home-screen launcher package so the implicit-broadcast
+     * restrictions added in Android 14 don't swallow it.
      */
     private fun requestPinShortcutAllLaunchers(
         shortcut: ShortcutInfoCompat,
@@ -173,39 +186,30 @@ object HShortcuts {
         bitmap: Bitmap,
         launchIntent: Intent,
     ) {
-        if (isVivoLikeDevice()) {
-            if (sendLegacyInstallShortcutBroadcast(label, bitmap, launchIntent)) return
-            // No BBK/vivo launcher receiver present — fall through to the modern API as a last resort.
-        }
         if (ShortcutManagerCompat.isRequestPinShortcutSupported(app)) {
             val ok = runCatching { ShortcutManagerCompat.requestPinShortcut(app, shortcut, null) }
                 .onFailure { HLog.e(it) }
                 .getOrDefault(false)
             if (ok) return
         }
-        // Last-ditch fallback for devices where neither path worked on the first try.
-        if (!sendLegacyInstallShortcutBroadcast(label, bitmap, launchIntent)) {
-            HUI.showToast(R.string.operation_failed, app.getString(R.string.action_add_pin_shortcut))
-        }
-    }
-
-    private fun isVivoLikeDevice(): Boolean {
-        val brand = Build.BRAND?.lowercase().orEmpty()
-        val manufacturer = Build.MANUFACTURER?.lowercase().orEmpty()
-        return brand == "vivo" || brand == "iqoo" || manufacturer == "vivo" || manufacturer == "iqoo"
+        if (sendLegacyInstallShortcutBroadcast(label, bitmap, launchIntent)) return
+        HUI.showToast(R.string.operation_failed, app.getString(R.string.action_add_pin_shortcut))
     }
 
     /**
-     * Dispatch the legacy INSTALL_SHORTCUT broadcast only to launcher packages whose receivers
-     * are actually installed on the device — sending to all three unconditionally can trigger the
-     * OS-level "Ошибка добавления" toast on devices that don't have the target launcher.
-     * Returns `true` if at least one launcher receiver accepted the broadcast.
+     * Send the legacy INSTALL_SHORTCUT broadcast, targeted at whichever launcher is set as the
+     * device's HOME. Explicit-package broadcasts skip Android 14+ implicit-broadcast restrictions
+     * and reach BBK / Vivo launcher receivers reliably.
      */
     private fun sendLegacyInstallShortcutBroadcast(
         label: CharSequence,
         bitmap: Bitmap,
         launchIntent: Intent,
     ): Boolean {
+        val homePackage = runCatching {
+            val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+            app.packageManager.resolveActivity(home, 0)?.activityInfo?.packageName
+        }.getOrNull() ?: return false
         val actions = arrayOf(
             "com.bbk.launcher.action.INSTALL_SHORTCUT",
             "com.vivo.launcher.action.INSTALL_SHORTCUT",
@@ -214,10 +218,8 @@ object HShortcuts {
         var delivered = false
         actions.forEach { action ->
             runCatching {
-                val probe = Intent(action)
-                val receivers = app.packageManager.queryBroadcastReceivers(probe, 0)
-                if (receivers.isEmpty()) return@forEach
                 val broadcast = Intent(action).apply {
+                    setPackage(homePackage)
                     putExtra(Intent.EXTRA_SHORTCUT_INTENT, launchIntent)
                     putExtra(Intent.EXTRA_SHORTCUT_NAME, label.toString())
                     putExtra(Intent.EXTRA_SHORTCUT_ICON, bitmap)
@@ -322,7 +324,7 @@ object HShortcuts {
     }
 
     private fun getDrawableIcon(drawable: Drawable): IconCompat =
-        IconCompat.createWithBitmap(getBitmapFromDrawable(drawable))
+        IconCompat.createWithAdaptiveBitmap(getBitmapFromDrawable(drawable))
 
     private fun getApplicationInfoForShortcut(packageName: String): ApplicationInfo? =
         HPackages.getApplicationInfoOrNull(packageName)
