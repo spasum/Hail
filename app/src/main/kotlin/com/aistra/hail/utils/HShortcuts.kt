@@ -1,6 +1,7 @@
 package io.spasum.hailshizuku.utils
 
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
@@ -70,7 +71,7 @@ object HShortcuts {
 
     fun addDynamicShortcut(packageName: String) {
         if (HailData.biometricLogin) return
-        val applicationInfo = HPackages.getApplicationInfoOrNull(packageName)
+        val applicationInfo = getApplicationInfoForShortcut(packageName)
         var bmp = applicationInfo?.let {
             IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
         } ?: getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
@@ -87,12 +88,14 @@ object HShortcuts {
 
     fun updateShortcutIcon(packageName: String, frozen: Boolean) {
         val id = packageName.hashCode().toString()
-        val appInfo = HPackages.getApplicationInfoOrNull(packageName) ?: return
-        var bmp = IconPack.loadIcon(appInfo.packageName) ?: iconLoader.loadIcon(appInfo)
+        val appInfo = getApplicationInfoForShortcut(packageName)
+        var bmp = appInfo?.let {
+            IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it)
+        } ?: getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
         if (frozen) bmp = toGreyscale(bmp)
         val shortcut = ShortcutInfoCompat.Builder(app, id)
             .setIcon(IconCompat.createWithBitmap(bmp))
-            .setShortLabel(appInfo.loadLabel(app.packageManager))
+            .setShortLabel(appInfo?.loadLabel(app.packageManager) ?: packageName)
             .setIntent(HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName))
             .build()
         runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
@@ -141,6 +144,10 @@ object HShortcuts {
 
     private fun getDrawableIcon(drawable: Drawable): IconCompat =
         IconCompat.createWithBitmap(getBitmapFromDrawable(drawable))
+
+    private fun getApplicationInfoForShortcut(packageName: String): ApplicationInfo? =
+        HPackages.getApplicationInfoOrNull(packageName)
+            ?: HPackages.getUnhiddenPackageInfoOrNull(packageName)?.applicationInfo
 
     private fun getBitmapFromDrawable(drawable: Drawable): Bitmap = Bitmap.createBitmap(
         drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888
