@@ -79,16 +79,17 @@ object HShortcuts {
      * time with an "Ошибка добавления" toast. Extras-based intents serialize more reliably.
      *
      * An explicit component is set so the intent resolves without relying on intent-filter
-     * matching, and `FLAG_ACTIVITY_NEW_TASK` is required for activities started from the launcher.
+     * matching. CATEGORY_DEFAULT is intentionally omitted — it is unnecessary for explicit-
+     * component intents and Vivo/OriginOS launchers reject shortcut intents that carry non-
+     * standard categories during their pin-time validation step.
      */
     fun buildLaunchIntent(packageName: String, tag: String? = null): Intent =
         Intent(HailApi.ACTION_LAUNCH).apply {
             component = ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS)
             setPackage(BuildConfig.APPLICATION_ID)
-            addCategory(Intent.CATEGORY_DEFAULT)
             putExtra(HailData.KEY_PACKAGE, packageName)
             if (tag != null) putExtra(HailData.KEY_TAG, tag)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
     /**
@@ -178,12 +179,14 @@ object HShortcuts {
     }
 
     /**
-     * Pin a shortcut to the home screen. Try modern [ShortcutManagerCompat.requestPinShortcut]
-     * first — it's the supported path on Android 8+ and stock launchers handle it correctly.
-     * If it returns false (e.g. OriginOS 5 / BBK launcher on Vivo, which rejects the modern flow
-     * with an "Ошибка добавления" toast), fall back to the legacy INSTALL_SHORTCUT broadcast
-     * targeted explicitly at the resolved home-screen launcher package so the implicit-broadcast
-     * restrictions added in Android 14 don't swallow it.
+     * Pin a shortcut to the home screen using both the modern API and the legacy broadcast.
+     *
+     * [ShortcutManagerCompat.requestPinShortcut] is tried first — it shows the system dialog on
+     * stock Android 8+ launchers.  However, Vivo / BBK / OriginOS 5 launchers often return `true`
+     * (accepting the request and showing a dialog) and then silently discard the shortcut, so we
+     * ALWAYS also send the legacy INSTALL_SHORTCUT broadcast.  On Android 8+ AOSP (Pixel, etc.)
+     * Launcher3 ignores INSTALL_SHORTCUT broadcasts entirely, so there is no duplicate risk on
+     * stock Android while OEM launchers receive the broadcast as a reliable fallback.
      */
     private fun requestPinShortcutAllLaunchers(
         shortcut: ShortcutInfoCompat,
@@ -192,15 +195,16 @@ object HShortcuts {
         launchIntent: Intent,
     ) {
         var lastError: Throwable? = null
+        var modernPinned = false
         if (ShortcutManagerCompat.isRequestPinShortcutSupported(app)) {
-            val modern = runCatching { ShortcutManagerCompat.requestPinShortcut(app, shortcut, null) }
+            modernPinned = runCatching { ShortcutManagerCompat.requestPinShortcut(app, shortcut, null) }
                 .onFailure { lastError = it; HLog.e(it) }
-            if (modern.getOrDefault(false)) return
+                .getOrDefault(false)
         }
-        if (sendLegacyInstallShortcutBroadcast(label, bitmap, launchIntent)) return
-        // Surface the underlying cause so the user can report something useful rather than a
-        // generic "operation failed" message; falls back to the canonical string when there's
-        // no exception to show (e.g. pin-shortcut API reports unsupported).
+        // Send legacy broadcast unconditionally — OEM launchers process it even when they also
+        // accepted the modern pin request; AOSP ignores it, so no duplicate on stock Android.
+        val legacySent = sendLegacyInstallShortcutBroadcast(label, bitmap, launchIntent)
+        if (modernPinned || legacySent) return
         val detail = lastError?.let { it.message ?: it.javaClass.simpleName }
             ?: app.getString(R.string.action_add_pin_shortcut)
         HUI.showToast(R.string.operation_failed, detail, isLengthLong = true)
@@ -323,7 +327,8 @@ object HShortcuts {
             component = ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS)
         }
         if (`package` == null) setPackage(BuildConfig.APPLICATION_ID)
-        addCategory(Intent.CATEGORY_DEFAULT)
+        // CATEGORY_DEFAULT is intentionally omitted — unnecessary for explicit-component intents
+        // and rejected by Vivo/OriginOS launchers during pin-time intent validation.
         flags = flags or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
     }
 
