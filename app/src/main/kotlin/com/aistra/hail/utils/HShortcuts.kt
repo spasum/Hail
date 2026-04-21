@@ -1,5 +1,6 @@
 package io.spasum.hailshizuku.utils
 
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
@@ -12,6 +13,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import io.spasum.hailshizuku.BuildConfig
 import io.spasum.hailshizuku.HailApp.Companion.app
 import io.spasum.hailshizuku.R
 import io.spasum.hailshizuku.app.AppInfo
@@ -22,6 +24,8 @@ import me.zhanghai.android.appiconloader.AppIconLoader
 import java.util.concurrent.ConcurrentHashMap
 
 object HShortcuts {
+    private const val API_ACTIVITY_CLASS = "io.spasum.hailshizuku.ui.api.ApiActivity"
+
     private val iconLoader by lazy {
         AppIconLoader(
             app.resources.getDimensionPixelSize(R.dimen.app_icon_size),
@@ -30,22 +34,14 @@ object HShortcuts {
         )
     }
 
-    /**
-     * Cache of full-colour app icons keyed by package name.
-     * Populated before freeze so that the icon remains available after the package is hidden.
-     */
+    /** Full-colour icon cache keyed by package name — keeps icons available after an app is hidden. */
     private val iconCache = ConcurrentHashMap<String, Bitmap>()
 
-    /**
-     * Load and cache the icon for [packageName] while the package is still visible to
-     * PackageManager.  Must be called *before* hiding/disabling the app.
-     */
     fun precacheAppIcon(packageName: String) {
         val appInfo = getApplicationInfoForShortcut(packageName) ?: return
         refreshIconCache(packageName, appInfo)
     }
 
-    /** Stores the full-colour icon in the cache using [appInfo]. */
     private fun refreshIconCache(packageName: String, appInfo: ApplicationInfo) {
         runCatching {
             iconCache[packageName] =
@@ -53,11 +49,7 @@ object HShortcuts {
         }
     }
 
-    /**
-     * Returns the cached icon, loads it fresh from [appInfo], or falls back to the
-     * default Android icon if both are unavailable; never returns null.
-     */
-    private fun loadAppIcon(packageName: String, appInfo: ApplicationInfo?): Bitmap {
+    private fun loadAppIconBitmap(packageName: String, appInfo: ApplicationInfo?): Bitmap {
         iconCache[packageName]?.let { return it }
         return runCatching {
             appInfo?.let { IconPack.loadIcon(it.packageName) ?: iconLoader.loadIcon(it) }
@@ -67,6 +59,50 @@ object HShortcuts {
         }
     }
 
+    private fun shortcutIdFor(packageName: String): String = packageName.hashCode().toString()
+
+    /**
+     * Build a [ShortcutInfoCompat] that reflects the current frozen/unfrozen state of [packageName].
+     * Icon is greyscaled when the app is frozen and coloured when it is not, mirroring IceBox.
+     */
+    private fun buildAppShortcut(packageName: String): ShortcutInfoCompat {
+        val appInfo = getApplicationInfoForShortcut(packageName)
+        val frozen = AppManager.isAppFrozen(packageName)
+        if (!frozen && appInfo != null) refreshIconCache(packageName, appInfo)
+        val bmp = runCatching {
+            loadAppIconBitmap(packageName, appInfo).let { if (frozen) toGreyscale(it) else it }
+        }.getOrElse {
+            getBitmapFromDrawable(app.packageManager.defaultActivityIcon).let {
+                if (frozen) toGreyscale(it) else it
+            }
+        }
+        val label = appInfo?.loadLabel(app.packageManager) ?: packageName
+        // Explicit component + package: picky launchers (MIUI/HyperOS) reject action-only intents
+        // with "Ошибка добавления" otherwise.
+        val intent = Intent(HailApi.ACTION_LAUNCH).apply {
+            component = ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS)
+            setPackage(BuildConfig.APPLICATION_ID)
+            putExtra(HailData.KEY_PACKAGE, packageName)
+        }
+        return ShortcutInfoCompat.Builder(app, shortcutIdFor(packageName))
+            .setIcon(IconCompat.createWithBitmap(bmp))
+            .setShortLabel(label)
+            .setIntent(intent)
+            .build()
+    }
+
+    /**
+     * Register a dynamic shortcut for [packageName] without launching the system pin dialog.
+     * Call this when the app is added to Hail's list — the shortcut becomes visible in Hail's
+     * long-press launcher menu and any future [updateShortcutIcon] call will propagate state
+     * changes to it (and to a pinned copy if the user later pins it).
+     */
+    fun registerAppShortcut(packageName: String) {
+        if (HailData.biometricLogin) return
+        runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, buildAppShortcut(packageName)) }
+            .onFailure { HLog.e(it) }
+    }
+
     fun addPinShortcut(icon: Drawable, id: String, label: CharSequence, intent: Intent) {
         addPinShortcut(getDrawableIcon(icon), id, label, intent)
     }
@@ -74,7 +110,7 @@ object HShortcuts {
     fun addPinShortcut(appInfo: AppInfo, id: String, label: CharSequence, intent: Intent) {
         val applicationInfo = appInfo.applicationInfo ?: getApplicationInfoForShortcut(appInfo.packageName)
         val bmp = runCatching {
-            loadAppIcon(appInfo.packageName, applicationInfo).let {
+            loadAppIconBitmap(appInfo.packageName, applicationInfo).let {
                 if (AppManager.isAppFrozen(appInfo.packageName)) toGreyscale(it) else it
             }
         }.getOrElse {
@@ -83,24 +119,21 @@ object HShortcuts {
         addPinShortcut(IconCompat.createWithBitmap(bmp), id, label, intent)
     }
 
+    /**
+     * Explicit user-initiated pin: register as dynamic so later updates land, then ask the launcher
+     * to pin it to the home screen. Failures are swallowed — launchers (e.g. MIUI without the
+     * "Create shortcuts" permission) show their own toast that we cannot suppress.
+     */
     fun addPinShortcutForApp(packageName: String) {
-        val appInfo = getApplicationInfoForShortcut(packageName)
-        val frozen = AppManager.isAppFrozen(packageName)
-        val bmp = runCatching {
-            loadAppIcon(packageName, appInfo).let { if (frozen) toGreyscale(it) else it }
-        }.getOrElse {
-            getBitmapFromDrawable(app.packageManager.defaultActivityIcon).let {
-                if (frozen) toGreyscale(it) else it
-            }
-        }
-        val icon = IconCompat.createWithBitmap(bmp)
-        val label = appInfo?.loadLabel(app.packageManager) ?: packageName
-        val id = packageName.hashCode().toString()
-        val intent = HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName)
-        val shortcut = ShortcutInfoCompat.Builder(app, id).setIcon(icon).setShortLabel(label).setIntent(intent).build()
+        val shortcut = buildAppShortcut(packageName)
         runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
         runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
-        addPinShortcut(icon, id, label, intent)
+        if (ShortcutManagerCompat.isRequestPinShortcutSupported(app)) {
+            runCatching { ShortcutManagerCompat.requestPinShortcut(app, shortcut, null) }
+                .onFailure { HLog.e(it) }
+        } else HUI.showToast(
+            R.string.operation_failed, app.getString(R.string.action_add_pin_shortcut)
+        )
     }
 
     private fun addPinShortcut(icon: IconCompat, id: String, label: CharSequence, intent: Intent) {
@@ -108,7 +141,8 @@ object HShortcuts {
             val shortcut =
                 ShortcutInfoCompat.Builder(app, id).setIcon(icon).setShortLabel(label)
                     .setIntent(intent).build()
-            ShortcutManagerCompat.requestPinShortcut(app, shortcut, null)
+            runCatching { ShortcutManagerCompat.requestPinShortcut(app, shortcut, null) }
+                .onFailure { HLog.e(it) }
         } else HUI.showToast(
             R.string.operation_failed, app.getString(R.string.action_add_pin_shortcut)
         )
@@ -116,51 +150,28 @@ object HShortcuts {
 
     fun addDynamicShortcut(packageName: String) {
         if (HailData.biometricLogin) return
-        val applicationInfo = getApplicationInfoForShortcut(packageName)
-        val frozen = AppManager.isAppFrozen(packageName)
-        // Refresh the cache when the app is visible (e.g. just before/after launch)
-        if (!frozen && applicationInfo != null) refreshIconCache(packageName, applicationInfo)
-        val bmp = runCatching {
-            loadAppIcon(packageName, applicationInfo).let { if (frozen) toGreyscale(it) else it }
-        }.getOrElse {
-            getBitmapFromDrawable(app.packageManager.defaultActivityIcon)
-        }
-        val shortcut =
-            ShortcutInfoCompat.Builder(app, packageName.hashCode().toString())
-                .setIcon(IconCompat.createWithBitmap(bmp))
-                .setShortLabel(applicationInfo?.loadLabel(app.packageManager) ?: packageName)
-                .setIntent(HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName))
-                .build()
-        ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
+        runCatching {
+            ShortcutManagerCompat.pushDynamicShortcut(app, buildAppShortcut(packageName))
+        }.onFailure { HLog.e(it) }
         addDynamicShortcutAction(HailData.dynamicShortcutAction)
     }
 
+    /**
+     * Refresh the icon of the shortcut for [packageName] to reflect [frozen]. This touches both
+     * the dynamic copy (if any) and any pinned copy on the home screen, which matches IceBox's
+     * colour-on-unfreeze / grey-on-freeze behaviour.
+     */
     fun updateShortcutIcon(packageName: String, frozen: Boolean) {
-        val id = packageName.hashCode().toString()
-        val appInfo = getApplicationInfoForShortcut(packageName)
-        // When unfreezing, refresh the cache now that PM can see the package again
-        if (!frozen && appInfo != null) refreshIconCache(packageName, appInfo)
-        val bmp = runCatching {
-            loadAppIcon(packageName, appInfo).let { if (frozen) toGreyscale(it) else it }
-        }.getOrElse {
-            HLog.e(it)
-            getBitmapFromDrawable(app.packageManager.defaultActivityIcon).let { fallback ->
-                if (frozen) toGreyscale(fallback) else fallback
-            }
-        }
-        val shortcut = ShortcutInfoCompat.Builder(app, id)
-            .setIcon(IconCompat.createWithBitmap(bmp))
-            .setShortLabel(appInfo?.loadLabel(app.packageManager) ?: packageName)
-            .setIntent(HailApi.getIntentForPackage(HailApi.ACTION_LAUNCH, packageName))
-            .build()
+        val shortcut = buildAppShortcut(packageName)
+        // updateShortcuts targets existing dynamic OR pinned shortcuts that share the id.
+        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
+            .onFailure { HLog.e(it) }
         val isDynamic = runCatching {
-            ShortcutManagerCompat.getDynamicShortcuts(app).any { it.id == id }
+            ShortcutManagerCompat.getDynamicShortcuts(app).any { it.id == shortcut.id }
         }.getOrElse { false }
         if (isDynamic) {
             runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
         }
-        // Always update pinned shortcuts on the home screen
-        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
     }
 
     fun addDynamicShortcutAction(action: String) {
@@ -186,8 +197,12 @@ object HShortcuts {
         }
         val shortcut = ShortcutInfoCompat.Builder(app, id).setIcon(
             getDrawableIcon(AppCompatResources.getDrawable(app, icon)!!)
-        ).setShortLabel(app.getString(label)).setIntent(Intent(id)).build()
-        ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
+        ).setShortLabel(app.getString(label)).setIntent(Intent(id).apply {
+            component = ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS)
+            setPackage(BuildConfig.APPLICATION_ID)
+        }).build()
+        runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
+            .onFailure { HLog.e(it) }
     }
 
     fun removeAllDynamicShortcuts() {
