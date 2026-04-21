@@ -163,15 +163,32 @@ object HShortcuts {
     }
 
     /**
-     * Explicit user-initiated pin invoked from the Home tab's long-press menu. Routes through
-     * [requestPinShortcutAllLaunchers] which uses the modern API with a legacy-broadcast fallback
-     * for OEM launchers (Vivo/BBK, etc.) that reject the modern flow.
+     * Explicit user-initiated pin invoked from the Home tab's long-press menu.
+     *
+     * IMPORTANT: the pinned shortcut intentionally uses the SAME ID as the dynamic shortcut
+     * ([shortcutIdFor], not [pinnedShortcutIdFor]).  Vivo OriginOS and Xiaomi MIUI/HyperOS
+     * launchers do NOT honour [ShortcutManagerCompat.updateShortcuts] for pinned shortcuts —
+     * they cache the icon at pin time and never refresh it.  However, they DO refresh a pinned
+     * shortcut's icon when [ShortcutManagerCompat.pushDynamicShortcut] is called with the same
+     * shortcut ID.  Sharing the ID between dynamic and pinned shortcuts is therefore the only
+     * reliable way to get live colour/grey updates on the home screen.
+     *
+     * To prevent Vivo/BBK from rejecting [requestPinShortcut] with a "duplicate already exists"
+     * error, the dynamic shortcut is removed before the pin request and re-registered immediately
+     * after so both entries coexist with the same ID from that point on.
      */
     fun addPinShortcutForApp(packageName: String) {
-        val shortcut = buildAppShortcut(packageName, forPin = true)
+        val shortcut = buildAppShortcut(packageName, forPin = false)  // ID = shortcutIdFor (hash)
+        // Remove the dynamic shortcut temporarily — Vivo/BBK rejects requestPinShortcut when
+        // a dynamic shortcut with the same ID already exists.
+        runCatching { ShortcutManagerCompat.removeDynamicShortcuts(app, listOf(shortcut.id)) }
         val bmp = iconCache[packageName] ?: loadAppIconBitmap(packageName, getApplicationInfoForShortcut(packageName))
         val label = shortcut.shortLabel ?: packageName
         requestPinShortcutAllLaunchers(shortcut, label, bmp, buildLaunchIntent(packageName))
+        // Re-register as dynamic so long-press launcher menu and the pinned home-screen copy
+        // both use ID shortcutIdFor(pkg). Future pushDynamicShortcut() calls update both.
+        runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
+            .onFailure { HLog.e(it) }
     }
 
     private fun addPinShortcut(icon: IconCompat, id: String, label: CharSequence, intent: Intent) {
@@ -269,24 +286,28 @@ object HShortcuts {
     }
 
     /**
-     * Refresh the icon of the shortcut for [packageName] to reflect [frozen]. We update both the
-     * dynamic variant and the pinned variant by ID — dynamic and pinned use distinct IDs (see
-     * [shortcutIdFor] / [pinnedShortcutIdFor]) so that OEM launchers don't reject a pin request
-     * as a duplicate of the already-pushed dynamic shortcut. Mirrors IceBox's colour-on-unfreeze
-     * / grey-on-freeze behaviour.
+     * Refresh the home-screen shortcut icon to reflect the current frozen/unfrozen state.
+     *
+     * Two APIs are used in combination because OEM launchers differ in what they honour:
+     * - [ShortcutManagerCompat.pushDynamicShortcut]: reliably refreshes the icon for both the
+     *   dynamic launcher-menu entry AND any pinned home-screen copy that shares the same shortcut
+     *   ID.  This is the primary update path for Vivo OriginOS / Xiaomi MIUI launchers, which
+     *   ignore [updateShortcuts] for pinned shortcuts but DO refresh pinned copies on push.
+     * - [ShortcutManagerCompat.updateShortcuts]: the documented API for updating pinned shortcuts;
+     *   honoured by AOSP Launcher3, Pixel, Samsung, etc.  Also sent for backwards compatibility
+     *   with old pinned shortcuts that were created with the separate "pin_hash" ID.
      */
     fun updateShortcutIcon(packageName: String, frozen: Boolean) {
-        val dynamicShortcut = buildAppShortcut(packageName, forPin = false)
-        val pinnedShortcut = buildAppShortcut(packageName, forPin = true)
-        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(dynamicShortcut, pinnedShortcut)) }
+        val shortcut = buildAppShortcut(packageName, forPin = false)  // ID = shortcutIdFor (hash)
+        // Primary path: push as dynamic — refreshes both the dynamic entry and the pinned
+        // home-screen copy when they share the same ID (see addPinShortcutForApp).
+        runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
             .onFailure { HLog.e(it) }
-        val isDynamic = runCatching {
-            ShortcutManagerCompat.getDynamicShortcuts(app).any { it.id == dynamicShortcut.id }
-        }.getOrElse { false }
-        if (isDynamic) {
-            runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, dynamicShortcut) }
-                .onFailure { HLog.e(it) }
-        }
+        // Secondary path: updateShortcuts for AOSP/Pixel/Samsung launchers, and backwards
+        // compat for old shortcuts created with the legacy "pin_hash" ID scheme.
+        val legacyPinned = buildAppShortcut(packageName, forPin = true)  // ID = "pin_hash"
+        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut, legacyPinned)) }
+            .onFailure { HLog.e(it) }
     }
 
     fun addDynamicShortcutAction(action: String) {
