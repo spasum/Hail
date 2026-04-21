@@ -1,6 +1,15 @@
 package io.spasum.hailshizuku.utils
 
+import android.util.Log
+
 object HLog {
-    fun i(tag: String, string: String) = Unit
-    fun e(t: Throwable) = Unit
+    private const val TAG = "Hail"
+
+    fun i(tag: String, string: String) {
+        Log.i(tag, string)
+    }
+
+    fun e(t: Throwable) {
+        Log.e(TAG, t.message ?: t.javaClass.simpleName, t)
+    }
 }

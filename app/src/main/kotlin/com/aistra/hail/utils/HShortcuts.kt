@@ -9,7 +9,6 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -26,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 object HShortcuts {
     private const val API_ACTIVITY_CLASS = "io.spasum.hailshizuku.ui.api.ApiActivity"
-    private const val URI_SCHEME = "shizufreeze"
 
     private val iconLoader by lazy {
         AppIconLoader(
@@ -63,27 +61,35 @@ object HShortcuts {
 
     private fun shortcutIdFor(packageName: String): String = packageName.hashCode().toString()
 
+    /** Pinned-shortcut ID is distinct from the dynamic-shortcut ID so BBK / Vivo launcher doesn't
+     * reject the pin request as a duplicate of an existing dynamic shortcut. */
+    private fun pinnedShortcutIdFor(packageName: String): String = "pin_" + shortcutIdFor(packageName)
+
+    /** Shortcut short-label per Google guideline: ≤10 chars. Some OEM launchers (Vivo/BBK) fail the
+     *  pin outright when the short label is longer. Full name still lives in long label. */
+    private fun truncateShortLabel(label: CharSequence): CharSequence {
+        val s = label.toString()
+        return if (s.length <= 10) s else s.substring(0, 10)
+    }
+
     /**
-     * Build the launch intent that will be wrapped in a shortcut. We use `ACTION_VIEW` + a data URI
-     * (`shizufreeze://launch?package=…`) rather than a custom action with extras. This is the form
-     * that picky OEM launchers (Vivo / OriginOS, MIUI / HyperOS, ColorOS, etc.) accept for pinned
-     * shortcuts — custom actions with extras often trigger a generic "Ошибка добавления" toast.
+     * Build the launch intent that will be wrapped in a shortcut. We use a custom action
+     * (`${applicationId}.action.LAUNCH`) with extras rather than a data-URI intent, because
+     * some OEM launchers (Vivo / OriginOS 5) reject URI-based shortcut intents at pin-persist
+     * time with an "Ошибка добавления" toast. Extras-based intents serialize more reliably.
      *
      * An explicit component is set so the intent resolves without relying on intent-filter
      * matching, and `FLAG_ACTIVITY_NEW_TASK` is required for activities started from the launcher.
      */
-    fun buildLaunchIntent(packageName: String, tag: String? = null): Intent {
-        val builder = Uri.Builder()
-            .scheme(URI_SCHEME).authority("launch")
-            .appendQueryParameter(HailData.KEY_PACKAGE, packageName)
-        if (tag != null) builder.appendQueryParameter(HailData.KEY_TAG, tag)
-        return Intent(Intent.ACTION_VIEW, builder.build()).apply {
+    fun buildLaunchIntent(packageName: String, tag: String? = null): Intent =
+        Intent(HailApi.ACTION_LAUNCH).apply {
             component = ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS)
             setPackage(BuildConfig.APPLICATION_ID)
             addCategory(Intent.CATEGORY_DEFAULT)
+            putExtra(HailData.KEY_PACKAGE, packageName)
+            if (tag != null) putExtra(HailData.KEY_TAG, tag)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
-    }
 
     /**
      * Build a [ShortcutInfoCompat] that reflects the current frozen/unfrozen state of [packageName].
@@ -95,7 +101,7 @@ object HShortcuts {
      * [ApiActivity] so the launcher's intent resolution has a clear owner, and [setLongLived]
      * tells the framework this shortcut is intended to survive beyond a single app session.
      */
-    private fun buildAppShortcut(packageName: String): ShortcutInfoCompat {
+    private fun buildAppShortcut(packageName: String, forPin: Boolean = false): ShortcutInfoCompat {
         val appInfo = getApplicationInfoForShortcut(packageName)
         val frozen = AppManager.isAppFrozen(packageName)
         if (!frozen && appInfo != null) refreshIconCache(packageName, appInfo)
@@ -107,9 +113,10 @@ object HShortcuts {
             }
         }
         val label = appInfo?.loadLabel(app.packageManager) ?: packageName
-        return ShortcutInfoCompat.Builder(app, shortcutIdFor(packageName))
+        val id = if (forPin) pinnedShortcutIdFor(packageName) else shortcutIdFor(packageName)
+        return ShortcutInfoCompat.Builder(app, id)
             .setIcon(IconCompat.createWithAdaptiveBitmap(bmp))
-            .setShortLabel(label)
+            .setShortLabel(truncateShortLabel(label))
             .setLongLabel(label)
             .setActivity(ComponentName(BuildConfig.APPLICATION_ID, API_ACTIVITY_CLASS))
             .setLongLived(true)
@@ -151,9 +158,7 @@ object HShortcuts {
      * for OEM launchers (Vivo/BBK, etc.) that reject the modern flow.
      */
     fun addPinShortcutForApp(packageName: String) {
-        val shortcut = buildAppShortcut(packageName)
-        runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
-        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
+        val shortcut = buildAppShortcut(packageName, forPin = true)
         val bmp = iconCache[packageName] ?: loadAppIconBitmap(packageName, getApplicationInfoForShortcut(packageName))
         val label = shortcut.shortLabel ?: packageName
         requestPinShortcutAllLaunchers(shortcut, label, bmp, buildLaunchIntent(packageName))
@@ -186,14 +191,19 @@ object HShortcuts {
         bitmap: Bitmap,
         launchIntent: Intent,
     ) {
+        var lastError: Throwable? = null
         if (ShortcutManagerCompat.isRequestPinShortcutSupported(app)) {
-            val ok = runCatching { ShortcutManagerCompat.requestPinShortcut(app, shortcut, null) }
-                .onFailure { HLog.e(it) }
-                .getOrDefault(false)
-            if (ok) return
+            val modern = runCatching { ShortcutManagerCompat.requestPinShortcut(app, shortcut, null) }
+                .onFailure { lastError = it; HLog.e(it) }
+            if (modern.getOrDefault(false)) return
         }
         if (sendLegacyInstallShortcutBroadcast(label, bitmap, launchIntent)) return
-        HUI.showToast(R.string.operation_failed, app.getString(R.string.action_add_pin_shortcut))
+        // Surface the underlying cause so the user can report something useful rather than a
+        // generic "operation failed" message; falls back to the canonical string when there's
+        // no exception to show (e.g. pin-shortcut API reports unsupported).
+        val detail = lastError?.let { it.message ?: it.javaClass.simpleName }
+            ?: app.getString(R.string.action_add_pin_shortcut)
+        HUI.showToast(R.string.operation_failed, detail, isLengthLong = true)
     }
 
     /**
@@ -246,19 +256,23 @@ object HShortcuts {
     }
 
     /**
-     * Refresh the icon of the shortcut for [packageName] to reflect [frozen]. This touches both
-     * the dynamic copy (if any) and any pinned copy on the home screen, which matches IceBox's
-     * colour-on-unfreeze / grey-on-freeze behaviour.
+     * Refresh the icon of the shortcut for [packageName] to reflect [frozen]. We update both the
+     * dynamic variant and the pinned variant by ID — dynamic and pinned use distinct IDs (see
+     * [shortcutIdFor] / [pinnedShortcutIdFor]) so that OEM launchers don't reject a pin request
+     * as a duplicate of the already-pushed dynamic shortcut. Mirrors IceBox's colour-on-unfreeze
+     * / grey-on-freeze behaviour.
      */
     fun updateShortcutIcon(packageName: String, frozen: Boolean) {
-        val shortcut = buildAppShortcut(packageName)
-        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(shortcut)) }
+        val dynamicShortcut = buildAppShortcut(packageName, forPin = false)
+        val pinnedShortcut = buildAppShortcut(packageName, forPin = true)
+        runCatching { ShortcutManagerCompat.updateShortcuts(app, listOf(dynamicShortcut, pinnedShortcut)) }
             .onFailure { HLog.e(it) }
         val isDynamic = runCatching {
-            ShortcutManagerCompat.getDynamicShortcuts(app).any { it.id == shortcut.id }
+            ShortcutManagerCompat.getDynamicShortcuts(app).any { it.id == dynamicShortcut.id }
         }.getOrElse { false }
         if (isDynamic) {
-            runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, shortcut) }
+            runCatching { ShortcutManagerCompat.pushDynamicShortcut(app, dynamicShortcut) }
+                .onFailure { HLog.e(it) }
         }
     }
 
